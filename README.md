@@ -12,3 +12,6 @@ Anything related to downloading files from the web, or running terminal commands
 graph TD
   A(Input) --> B[Output]
 ```
+Input: Could be Mic, a wakeup call "Wake up daddys home" or (potentially) the signal strength of users phones bluetooth from PC.
+
+Ouptut: a pipeline of actions, creating media, even asking clarification questions as well.
