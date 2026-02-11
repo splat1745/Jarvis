@@ -28,23 +28,10 @@ class QwenChatbot:
 # Example Usage
 if __name__ == "__main__":
     chatbot = QwenChatbot()
-
-    # First input (without /think or /no_think tags, thinking mode is enabled by default)
-    user_input_1 = "How many r's in strawberries?"
-    print(f"User: {user_input_1}")
-    response_1 = chatbot.generate_response(user_input_1)
-    print(f"Bot: {response_1}")
-    print("----------------------")
-
-    # Second input with /no_think
-    user_input_2 = "Then, how many r's in blueberries? /no_think"
-    print(f"User: {user_input_2}")
-    response_2 = chatbot.generate_response(user_input_2)
-    print(f"Bot: {response_2}") 
-    print("----------------------")
-
-    # Third input with /think
-    user_input_3 = "Really? /think"
-    print(f"User: {user_input_3}")
-    response_3 = chatbot.generate_response(user_input_3)
-    print(f"Bot: {response_3}")
+    print("Welcome to the Qwen Chatbot! You can ask questions or give commands. Use /think to enable thinking mode and /no_think to disable it.")
+    user_input = input("You: ")
+    while user_input.lower() != "exit":
+        response = chatbot.generate_response(user_input)
+        print(f"Bot: {response}")
+        print("----------------------")
+        user_input = input("You: ")
