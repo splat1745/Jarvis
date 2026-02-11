@@ -1,0 +1,13 @@
+Jarvis:
+do stuff
+an ai
+preferences, personalized - enis
+isloated - sachin
+generate personal profile - sachin, rayan
+RL train for preferred response (jarvis/smart) - combined
+database, record/take notes of user - sachin, enis
+rule making/censorship - enis
+access to financial - sachin
+
+pipeline: 
+STT or Input --> LLM (thinking/tool use) --> Action or TTS for clarification/question
