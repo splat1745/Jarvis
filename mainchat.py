@@ -1,9 +1,11 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"  # Use GPU 1
 
 class QwenChatbot:
     def __init__(self, model_name="Qwen/Qwen3-0.6B"):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(model_name)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name).to("cuda")
         self.history = []
 
     def generate_response(self, user_input):
@@ -15,7 +17,7 @@ class QwenChatbot:
             add_generation_prompt=True
         )
 
-        inputs = self.tokenizer(text, return_tensors="pt")
+        inputs = self.tokenizer(text, return_tensors="pt").to("cuda")
         response_ids = self.model.generate(**inputs, max_new_tokens=32768)[0][len(inputs.input_ids[0]):].tolist()
         response = self.tokenizer.decode(response_ids, skip_special_tokens=True)
 
