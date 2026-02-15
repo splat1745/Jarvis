@@ -1,0 +1,11 @@
+#huggingface
+transformers
+accelerate
+huggingface-hub
+sentencepiece
+safetensors
+
+#torch
+torch (cuda 13.0)
+torchvision (cuda 13.0)
+torchaudio (cuda 13.0)
