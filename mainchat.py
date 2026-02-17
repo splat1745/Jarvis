@@ -1,6 +1,7 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"  # Use GPU 1
+import threading
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # Restrict to gpu0
 
 class QwenChatbot:
     def __init__(self, model_name="Qwen/Qwen3-0.6B"):
@@ -8,7 +9,7 @@ class QwenChatbot:
         self.model = AutoModelForCausalLM.from_pretrained(model_name).to("cuda")
         self.history = []
 
-    def generate_response(self, user_input):
+    def generate_response(self, user_input, stream=True):
         messages = self.history + [{"role": "user", "content": user_input}]
 
         text = self.tokenizer.apply_chat_template(
