@@ -1,1 +1,5 @@
 .venv
+# Piper runtime
+piper/
+*.onnx
+*.wav
