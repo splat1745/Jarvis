@@ -12,3 +12,6 @@ torchaudio (cuda 13.0)
 
 # STT
 faster-whisper
+
+# TTS 
+Piper 
