@@ -1,12 +1,16 @@
 import os
 import subprocess
 import uuid
+import platform
+import shutil
 
 # Get the absolute path of the project directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Path to Piper executable (must be placed inside /piper)
-PIPER_PATH = os.path.join(BASE_DIR, "piper", "piper.exe")
+# Use platform-appropriate filename (piper.exe on Windows, piper otherwise)
+_PIPER_EXE = "piper.exe" if platform.system() == "Windows" else "piper"
+PIPER_PATH = os.path.join(BASE_DIR, "piper", _PIPER_EXE)
 
 # Path to voice model (place inside /piper/voices)
 VOICE_MODEL = os.path.join(BASE_DIR, "piper", "voices", "en_US-joe-medium.onnx")
@@ -48,5 +52,40 @@ def speak(text: str, speed: float = 0.82) -> None:
     # Send text to Piper via stdin
     process.communicate(formatted_text)
 
-    # Play generated audio file (Windows only)
-    os.startfile(filename)
+    # Play generated audio file (cross-platform)
+    def _find_audio_player():
+        # Return the first available audio player on Linux. On Windows we use os.startfile.
+        if platform.system() == "Windows":
+            return None
+        candidates = ["paplay", "aplay", "play", "ffplay"]
+        for cmd in candidates:
+            if shutil.which(cmd):
+                return cmd
+        return None
+
+    def _play_audio(path: str):
+        if platform.system() == "Windows":
+            try:
+                os.startfile(path)
+                return
+            except Exception:
+                return
+
+        player = _find_audio_player()
+        if not player:
+            return
+
+        # ffplay needs flags; others take filename directly
+        if player == "ffplay":
+            subprocess.run([player, "-nodisp", "-autoexit", path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
+            subprocess.run([player, path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    try:
+        _play_audio(filename)
+    finally:
+        # Attempt to remove temporary file; ignore errors
+        try:
+            os.remove(filename)
+        except Exception:
+            pass
