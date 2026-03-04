@@ -15,3 +15,7 @@ faster-whisper
 
 # TTS 
 Piper 
+
+# Listen and record
+souunddevice
+soundfile

@@ -1,11 +1,10 @@
-# Use pip install faster-whisper for this script
-
+import torch
 from faster_whisper import WhisperModel
 
-# config
+# config (auto-detect GPU/CPU)
 model_size = "tiny"
-device = "cuda"
-compute_type = "float16" # FP16 is native and optimal here
+device = "cuda" if torch.cuda.is_available() else "cpu"
+compute_type = "float16" if device == "cuda" else "float32"
 
 model = WhisperModel(model_size, device=device, compute_type=compute_type)
 
