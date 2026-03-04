@@ -5,17 +5,24 @@ huggingface-hub
 sentencepiece
 safetensors
 
-# torch
-torch (cuda 13.0)
-torchvision (cuda 13.0)
-torchaudio (cuda 13.0)
+# torch. install manually with the right CUDA version, e.g.:
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130
+torch
+torchvision
+torchaudio
 
 # STT
 faster-whisper
 
-# TTS 
-Piper 
+# TTS
+# Piper is a standalone binary
+# Download it from: https://github.com/rhasspy/piper/releases
 
-# Listen and record
-souunddevice
+# Audio
+sounddevice
 soundfile
+numpy
+
+# agent + tool/MCP support
+qwen-agent[mcp]
+openai
