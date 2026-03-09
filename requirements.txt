@@ -4,6 +4,7 @@ accelerate
 huggingface-hub
 sentencepiece
 safetensors
+datasets
 
 # torch. install manually with the right CUDA version, e.g.:
 #   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130
@@ -17,6 +18,11 @@ faster-whisper
 # TTS
 # Piper is a standalone binary
 # Download it from: https://github.com/rhasspy/piper/releases
+#
+# For voice training (training/piperCustomVoice.py on linux), run manually:
+#   sudo apt install espeak-ng
+#   pip install piper-phonemize --extra-index-url https://rhasspy.github.io/piper-phonemize/
+#   pip install "piper-train @ git+https://github.com/rhasspy/piper.git#subdirectory=src/python"
 
 # Audio
 sounddevice
@@ -27,3 +33,4 @@ numpy
 qwen-agent[mcp]
 openai
 uv # duck duck go MCP server
+ 
