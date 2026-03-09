@@ -26,3 +26,4 @@ numpy
 # agent + tool/MCP support
 qwen-agent[mcp]
 openai
+uv # duck duck go MCP server
