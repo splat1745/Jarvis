@@ -8,10 +8,15 @@ from typing import List, Dict
 # If the package isn't installed we fall back to the plain transformers model below.
 try:
     from qwen_agent.agents import Assistant
+    from qwen_agent.tools.base import BaseTool, register_tool
     HAS_QWEN_AGENT = True
 except Exception:
     Assistant = None
+    BaseTool = object
+    def register_tool(name): return lambda cls: cls
     HAS_QWEN_AGENT = False
+
+import json
 
 # custom files
 from Listen import listen, model
@@ -42,6 +47,18 @@ class QwenChatbot:
         self.history.append({"role": "assistant", "content": response})
 
         return response
+
+# ----------- CUSTOM TOOL DEFINITIONS (for Qwen Agent) -----------
+
+@register_tool('get_current_time')
+class GetCurrentTime(BaseTool):
+    description = "Get the current date and time in ISO format."
+    parameters = []
+
+    def call(self, params: str, **kwargs) -> str:
+        from datetime import datetime
+        return datetime.now().isoformat()
+
 
 # Example Usage
 if __name__ == "__main__":
@@ -81,23 +98,32 @@ if __name__ == "__main__":
     print("Welcome to the Qwen Chatbot! Say 'exit' to quit.")
 
     if use_agent and HAS_QWEN_AGENT:
+        # For ollama to run locally
         llm_cfg = {
             'model': os.environ.get("QWEN_MODEL", "qwen3.5:2b"),
             'model_server': os.environ.get("QWEN_MODEL_SERVER", "http://localhost:11434/v1"),
             'api_key': 'EMPTY',
         }
 
+        # Tool definitions for the agent. You can add custom tools or MCP servers here.
         tools = [
-            {'mcpServers': {
+            'get_current_time', # Custom tool
+            {'mcpServers': { 
                 "filesystem": {
                     "command": "npx",
                     "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
+                },
+                "duckduckgo": {
+                    "command": "uvx",
+                    "args": ["duckduckgo-mcp-server"]
                 }
             }}
         ]
 
+        # Initialize the agent with the LLM config and tools
         bot = Assistant(llm=llm_cfg, function_list=tools)
 
+        # listen for user input and respond until "exit" is said
         user_input = listen(model)
         while user_input.lower() != "exit":
             messages = [{'role': 'user', 'content': user_input}]
