@@ -49,7 +49,7 @@ Enviroment: So far, the idea is that it can input preset keyboard commands, thou
    ollama pull qwen3.5:2b
    ```
 
-   > `qwen3.5:27b` is an option if you have 16 GB+ VRAM
+   `qwen3.5:27b` is an amazing option if you have 16 GB+ VRAM
 
 5. Run the chatbot:
    - **Basic mode** (local transformers, no tools): `python mainchat.py`
