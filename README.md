@@ -41,7 +41,7 @@ Enviroment: So far, the idea is that it can input preset keyboard commands, thou
    ```
   other gpus may work better with different versions, so be sure to check the compatibility. If you don't have a compatible GPU, you can still run the model on CPU, but it will be much slower. 
 
-   CPU only (if you dont have a gpu, will be slower): `pip install torch torchvision torchaudio`
+   CPU only (if you dont have a gpu): `pip install torch torchvision torchaudio`
 3. Download the [Piper TTS binary](https://github.com/rhasspy/piper/releases) and put it somewhere on your PATH (or next to `Piper_tts.py`)
 4. Install [Ollama](https://ollama.com) and pull the model:
 
