@@ -42,16 +42,18 @@ Enviroment: So far, the idea is that it can input preset keyboard commands, thou
   other gpus may work better with different versions, so be sure to check the compatibility. If you don't have a compatible GPU, you can still run the model on CPU, but it will be much slower. 
 
    CPU only (if you dont have a gpu): `pip install torch torchvision torchaudio`
+   
 3. Download the [Piper TTS binary](https://github.com/rhasspy/piper/releases) and put it somewhere on your PATH (or next to `Piper_tts.py`)
+   
 4. Install [Ollama](https://ollama.com) and pull the model:
 
    ```bash
    ollama pull qwen3.5:2b
    ```
 
-   `qwen3.5:27b` is an amazing option if you have 16 GB+ VRAM
+   `qwen3.5:27b` is an amazing option if you have 16 GB+ VRAM (will be a tight fit though)
 
-5. Run the chatbot:
+6. Run the chatbot:
    - **Basic mode** (local transformers, no tools): `python mainchat.py`
    - **Agent mode** (Ollama + tool/MCP support): `USE_QWEN_AGENT=1 python mainchat.py`
 
