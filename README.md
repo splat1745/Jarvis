@@ -28,7 +28,7 @@ Agent: Qwen3.5 2b. This is big enough to have great agentic capability, whilst b
 
 STT: We are using faster-whisper because of its compatibility across platforms/code, there are probably better options though
 
-TTS: Piper TTS is what we are using. Despite its quality, it can get a near **200x** real time audio speed with compatibility 
+TTS: Piper TTS is what we are using. Despite its quality, it can get a near **200x - 600x** real time audio speed with compatibility 
 across devices of all sorts. We are looking to finetune piper to "sound" more like jarvis using huggingface datasets, but it has not been done yet.
 
 Enviroment: So far, the idea is that it can input preset keyboard commands, though we are looking to use the Agents multimodel capabilities to control its actions (with safeguards).
