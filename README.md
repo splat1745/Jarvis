@@ -13,6 +13,9 @@ graph TD
   A(Mic/STT) --> B[LLM/Agent] 
   B --> C1(Piper/TTS)
   B --> C2(Actions/Keyboard input)
+  C2 --> D1(Follow up question)
+  D1 --> E(Completed Action)
+  C2 --> E
 ```
 Input: Could be Mic or a wakeup call "Wake up daddys home" for example.
 
