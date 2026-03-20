@@ -48,13 +48,25 @@ Enviroment: So far, the idea is that it can input preset keyboard commands, thou
    
 3. Download the [Piper TTS binary](https://github.com/rhasspy/piper/releases) and put it somewhere on your PATH (or next to `Piper_tts.py`)
    
-4. Install [Ollama](https://ollama.com) and pull the model:
+4. Install Ollama [here](https://ollama.com) or
+   
+   For Linux:
+   ```bash
+   curl -fsSL https://ollama.com/install.sh | sh
+   ```
+   For Windows:
+   ```powershell
+   irm https://ollama.com/install.ps1 | iex
+   ```
+   
+5. Then pull the model:
 
    ```bash
    ollama pull qwen3.5:2b
    ```
 
    `qwen3.5:9b` is an amazing option if you have 16 GB+ VRAM
+   Ensure that you have the latest ollama version
 
 6. Run the chatbot:
    - **Basic mode** (local transformers, no tools): `python mainchat.py`
