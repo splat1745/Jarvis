@@ -86,3 +86,41 @@ Then run `python training/piperCustomVoice.py`
 
 You can choose any dataset youd like, but be sure to not steal other peoples data (very bad).
 we use open sourced datasets on huggingface.
+
+# Project J.A.R.V.I.S. Roadmap (Local Build)
+
+## Phase 1: The Core Brain (Ollama & Logic)
+- [x] **Ollama Setup:** Install and pull high-reasoning models for deep thinking tasks.
+- [ ] **Orchestration Layer:** Build a Python wrapper to handle system prompts and context window management.
+- [ ] **Local Profile Database:** Set up a local JSON or SQLite database to store user preferences and "Self-Learn" data (isolated locally, could add RL here for perpetual improvement).
+- [ ] **Keyword Trigger Engine:** Implement a listener for specific phrases:
+    - [ ] "JARVIS DADDY'S HOME" -> Trigger welcome sequence and pull recent topics/projects of activity.
+    - [ ] "HEY JARVIS" -> Activate non-blocking STT stream to parse user/masters requests.
+
+## Phase 2: Voice & Interaction (STT/TTS)
+- [ ] **Speech-to-Text (STT):** Integrate `Faster-Whisper` for local, low-latency transcription of commands and notes.
+- [x] **Text-to-Speech (TTS):** Implement `Piper` or `Coqui TTS` for high-speed local voice generation.
+- [ ] **Voice Packs:** Create system logic to swap between "Professional English" and "Gen Z Slang" based on detected mood or manual toggle.
+- [ ] **Note-Taking Feature:** Map a "Make a note" voice command to automatically save transcripts to a local `.md` file or database or Obsidian visuals for easy parsing.
+
+## Phase 3: The "Holographic" UI & Telemetry
+- [ ] **System Monitor:** Use `psutil` and `GPUtil` or even `nvidia-smi` to pull real-time stats:
+    - [ ] CPU / RAM / GPU Usage % / NVME read/write.
+    - [ ] System Uptime and Network Latency (Ping, ingress/egress).
+- [ ] **Agent Stats:** Track and display LLM "Time to First Token" and overall inference latency/throughput.
+- [ ] **Visualizer UI:** - [ ] Build a transparent/dark-themed overlay (using PyQt or Kivy) to simulate a "holographic" display.
+    - [ ] Display live scrolling transcripts and "listening" waveforms.
+    - [ ] Display active project completion percentages (eg project 1 is 52% completed, project 2 is 34% etc)
+
+## Phase 4: Automation & Life Integration
+- [ ] **Developer Workflow Maker** Implement tools to allow jarvis to auto create workflows based on use frequency
+    - [ ] Script a "Assignment Checker" (link to a local calendar or `.csv`).
+    - [ ] Integrate Git commands: "Make new repo," "Open [Project] for editing."
+- [ ] **Shopping/Cart Logic** Implement basic shopping website access (like amazon, temu etc) with potentially OpenCV to block clicking buy buttons/falling for click-bait ads.
+    - [ ] Build a secure mock-integration for cart management.
+    - [ ] Implement "Request Review" logic (e.g., "I found 3 item lists, which one should I order?").
+- [ ] **Censorship/Safety:** Add a local keyword filter or prompt-injection guardrail to keep responses aligned with your preferences (could be prompt guards from HF).
+
+## Phase 5: Testing & Polishing
+- [ ] **Latency Optimization:** Fine-tune model quantization (4-bit or 8-bit) to ensure voice responses feel instantaneous.
+- [ ] **Mood Detection:** Simple sentiment analysis on user input to automatically pick the right "Voice Pack." (eg Friday voice etc).
