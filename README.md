@@ -11,11 +11,11 @@ Anything related to downloading files from the web, or running terminal commands
 ```mermaid
 graph TD
   A(Mic/STT) --> B[LLM/Agent] 
-  B --> C1(Piper/TTS)
-  B --> C2(Actions/Keyboard input)
-  C2 --> D1(Follow up question)
-  D1 --> E(Completed Action)
-  C2 --> E
+  B --> C1(Actions/Keyboard Commands)
+  B --> C2(Follow up Questions)
+  C2 --> C1
+  C1 --> D(Final Response/Filtered Summary)
+  D --> E(Piper/TTS response)
 ```
 Input: Could be Mic or a wakeup call "Wake up daddys home" for example.
 
