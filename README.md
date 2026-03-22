@@ -108,7 +108,7 @@ we use open sourced datasets on huggingface.
     - [ ] CPU / RAM / GPU Usage % / NVME read/write.
     - [ ] System Uptime and Network Latency (Ping, ingress/egress).
 - [ ] **Agent Stats:** Track and display LLM "Time to First Token" and overall inference latency/throughput.
-- [ ] **Visualizer UI:** - [ ] Build a transparent/dark-themed overlay (using PyQt or Kivy) to simulate a "holographic" display.
+- [ ] **Visualizer UI:** - Build a transparent/dark-themed overlay (using PyQt or Kivy) to simulate a "holographic" display.
     - [ ] Display live scrolling transcripts and "listening" waveforms.
     - [ ] Display active project completion percentages (eg project 1 is 52% completed, project 2 is 34% etc)
 
