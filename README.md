@@ -14,7 +14,7 @@ graph TD
   B --> C1(Actions/Keyboard Commands)
   B --> C2(Follow up Questions)
   C2 --> C1
-  C1 --> D(Final Response/Filtered Summary)
+  C1 --> D(Final Response/Summary)
   D --> E(Piper/TTS response)
 ```
 Input: Could be Mic or a wakeup call "Wake up daddys home" for example.
