@@ -123,4 +123,5 @@ we use open sourced datasets on huggingface.
 
 ## Phase 5: Testing & Polishing
 - [ ] **Latency Optimization:** Fine-tune model quantization (4-bit or 8-bit) to ensure voice responses feel instantaneous.
+- [ ] **Throughput Optimization:** Apply known throughput optimizations in order to speed up thinking time, and tool calling.
 - [ ] **Mood Detection:** Simple sentiment analysis on user input to automatically pick the right "Voice Pack." (eg Friday voice etc).
