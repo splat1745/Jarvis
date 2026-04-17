@@ -118,7 +118,7 @@ we use open sourced datasets on huggingface.
     - [ ] "HEY JARVIS" -> Activate non-blocking STT stream to parse user/masters requests.
 
 ## Phase 2: Voice & Interaction (STT/TTS)
-- [ ] **Speech-to-Text (STT):** Integrate `Faster-Whisper` for local, low-latency transcription of commands and notes.
+- [x] **Speech-to-Text (STT):** Integrate `Faster-Whisper` for local, low-latency transcription of commands and notes.
 - [x] **Text-to-Speech (TTS):** Implement `Piper` or `Coqui TTS` for high-speed local voice generation.
 - [ ] **Voice Packs:** Create system logic to swap between "Professional English" and "Gen Z Slang" based on detected mood or manual toggle.
 - [ ] **Note-Taking Feature:** Map a "Make a note" voice command to automatically save transcripts to a local `.md` file or database or Obsidian visuals for easy parsing.
