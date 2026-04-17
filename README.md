@@ -36,42 +36,61 @@ Enviroment: So far, the idea is that it can input preset keyboard commands, thou
 
 ## Environment setup
 
-1. Install the requirements: `pip install -r requirements.txt`
+1. Install the requirements:
 
-2. Install torch with the right CUDA version for your system (see [pytorch.org](https://pytorch.org/get-started/locally/)), e.g. for CUDA 13.0:
+    `pip install -r requirements.txt`
 
-   ```bash
-   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130
-   ```
-  other gpus may work better with different versions, so be sure to check the compatibility. If you don't have a compatible GPU, you can still run the model on CPU, but it will be much slower. 
+2. Install torch with the right build for your system.
 
-   CPU only (if you dont have a gpu): `pip install torch torchvision torchaudio`
-   
-3. Download the [Piper TTS binary](https://github.com/rhasspy/piper/releases) and put it somewhere on your PATH (or next to `Piper_tts.py`)
-   
-4. Install Ollama [here](https://ollama.com) or
-   
-   For Linux:
-   ```bash
-   curl -fsSL https://ollama.com/install.sh | sh
-   ```
-   For Windows:
-   ```powershell
-   irm https://ollama.com/install.ps1 | iex
-   ```
-   
+    On a Windows on ARM laptop like Snapdragon X, use a 64-bit Python install and rebuild the venv from that interpreter. The ARM64 interpreter in this repo does not resolve the current torch wheels, but the x64 wheels work with emulation and CPU-only inference.
+
+    Recommended for this machine:
+
+    ```powershell
+    C:\Python313\python.exe -m venv .venv
+    .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+    ```
+
+    If you have an NVIDIA GPU on a different machine, install the matching CUDA wheel from [PyTorch](https://pytorch.org/get-started/locally/), for example for CUDA 13.0:
+
+    ```bash
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130
+    ```
+
+    Other GPUs may work better with different versions, so check compatibility. If you do not have a compatible GPU, you can still run the model on CPU, but it will be much slower.
+
+    CPU only (if you do not have a GPU):
+
+    `pip install torch torchvision torchaudio`
+
+3. Download the [Piper TTS binary](https://github.com/rhasspy/piper/releases) and put it somewhere on your PATH (or next to `Piper_tts.py`).
+
+4. Install Ollama from the [official site](https://ollama.com) or:
+
+    For Linux:
+
+    ```bash
+    curl -fsSL https://ollama.com/install.sh | sh
+    ```
+
+    For Windows:
+
+    ```powershell
+    irm https://ollama.com/install.ps1 | iex
+    ```
+
 5. Then pull the model:
 
-   ```bash
-   ollama pull qwen3.5:2b
-   ```
+    ```bash
+    ollama pull qwen3.5:2b
+    ```
 
-   `qwen3.5:9b` is an amazing option if you have 16 GB+ VRAM
-   Ensure that you have the latest ollama version
+    `qwen3.5:9b` is an amazing option if you have 16 GB+ VRAM. Ensure that you have the latest Ollama version.
 
 6. Run the chatbot:
-   - **Basic mode** (local transformers, no tools): `python mainchat.py`
-   - **Agent mode** (Ollama + tool/MCP support): `USE_QWEN_AGENT=1 python mainchat.py`
+
+    - **Basic mode** (local transformers, no tools): `python mainchat.py`
+    - **Agent mode** (Ollama + tool/MCP support): `USE_QWEN_AGENT=1 python mainchat.py`
 
 ## Voice training (optional)
 

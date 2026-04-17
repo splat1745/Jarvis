@@ -1,10 +1,21 @@
 import os
 import torch
 import numpy as np 
-import sounddevice as sd
 import soundfile as sf
 import tempfile
 from faster_whisper import WhisperModel
+import platform
+
+
+_original_platform_machine = None
+if platform.system() == "Windows" and platform.machine().lower() in {"arm64", "aarch64"}:
+    _original_platform_machine = platform.machine
+    platform.machine = lambda: "AMD64"
+
+import sounddevice as sd
+
+if _original_platform_machine is not None:
+    platform.machine = _original_platform_machine
 
 # config (auto-detect GPU/CPU)
 model_size = "tiny"
