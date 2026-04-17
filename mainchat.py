@@ -39,13 +39,17 @@ class QwenChatbot:
         )
 
         inputs = self.tokenizer(text, return_tensors="pt").to(self.device)
-        response_ids = self.model.generate(
+        input_length = inputs["input_ids"].shape[-1]
+
+        generated_ids = self.model.generate(
             **inputs,
-            max_length=512, # hard cap on response length
+            max_new_tokens=256,
             do_sample=True, # enable sampling (more natural response)
-            temperature=0.7, #control randomness:lower = more focused
+            temperature=0.7, # control randomness: lower = more focused
             top_p=0.9,
-        )[0][(len.input_ids[0]):].tolist()
+        )[0]
+        response_ids = generated_ids[input_length:].tolist()
+        response = self.tokenizer.decode(response_ids, skip_special_tokens=True).strip()
 
         # Update history
         self.history.append({"role": "user", "content": user_input})
