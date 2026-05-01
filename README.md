@@ -117,7 +117,7 @@ we use open sourced datasets on huggingface.
     - [ ] "JARVIS DADDY'S HOME" -> Trigger welcome sequence and pull recent topics/projects of activity.
     - [ ] "HEY JARVIS" -> Activate non-blocking STT stream to parse user/masters requests.
 
-## Phase 2: Voice & Interaction (STT/TTS)
+## Phase 2: Voice & Interaction (STT/TTS) 
 - [x] **Speech-to-Text (STT):** Integrate `Faster-Whisper` for local, low-latency transcription of commands and notes.
 - [x] **Text-to-Speech (TTS):** Implement `Piper` or `Coqui TTS` for high-speed local voice generation.
 - [ ] **Voice Packs:** Create system logic to swap between "Professional English" and "Gen Z Slang" based on detected mood or manual toggle.
