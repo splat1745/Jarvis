@@ -22,10 +22,11 @@ import random
 try:
     from Listen import listen, model as whisper_model
     HAS_STT = True
-except Exception:
+except Exception as e:
     HAS_STT = False
     whisper_model = None
-    print("[JARVIS] Listen.py not found — mic input disabled")
+    listen = None
+    print(f"[JARVIS] Listen.py not found — mic input disabled ({e})")
 
 try:
     from Piper_tts import speak
@@ -35,20 +36,22 @@ except Exception:
     speak = lambda text: print(f"[TTS] {text}")
     print("[JARVIS] Piper_tts.py not found — TTS disabled")
 
+import os
+USE_AGENT = os.environ.get("USE_QWEN_AGENT", "0") == "1"
+
+import os
+USE_AGENT = os.environ.get("USE_QWEN_AGENT", "0") == "1"
+HAS_LLM = False
+QwenChatbot = None
+
 try:
-    import os
-    USE_AGENT = os.environ.get("USE_QWEN_AGENT", "0") == "1"
     if USE_AGENT:
         from qwen_agent.agents import Assistant
-        from qwen_agent.tools.base import BaseTool, register_tool
     else:
         from mainchat import QwenChatbot
-        _chatbot_instance = None
     HAS_LLM = True
-except Exception:
-    HAS_LLM = False
-    print("[JARVIS] mainchat.py not found — using echo mode")
-
+except Exception as e:
+    print(f"[JARVIS] LLM not loaded — using echo mode ({e})")
 
 # ── Color palette (from Figma) ─────────────────────────────────────────────────
 BG_MAIN      = "#050d14"
@@ -105,7 +108,7 @@ class JarvisApp(ctk.CTk):
     def _init_llm_async(self):
         def _load():
             global _chatbot_instance
-            if HAS_LLM and not USE_AGENT:
+            if HAS_LLM and not USE_AGENT and QwenChatbot is not None:
                 try:
                     _chatbot_instance = QwenChatbot()
                     self.chatbot = _chatbot_instance
@@ -247,7 +250,7 @@ class JarvisApp(ctk.CTk):
         # ── Wake Words ────────────────────────────────────────────────────────
         self._section_label(inner, "WAKE WORDS")
         for ww in ["Jarvis daddy's home", "Let's get cookin", "Hey Jarvis"]:
-            pill = ctk.CTkFrame(inner, height=26, fg_color="#00ffff0a",
+            pill = ctk.CTkFrame(inner, height=26, fg_color="#001520",
                                 border_color=BORDER, border_width=1, corner_radius=2)
             pill.pack(fill="x", padx=16, pady=3)
             pill.pack_propagate(False)
@@ -280,11 +283,11 @@ class JarvisApp(ctk.CTk):
         for mode in ["PRO", "GEN Z", "CALM"]:
             btn = ctk.CTkButton(mode_row, text=mode, width=48, height=24,
                                 font=ctk.CTkFont("Courier New", 9),
-                                fg_color="#00ffff1a" if mode == "PRO" else "#00ffff08",
+                                fg_color="#002d3d" if mode == "PRO" else "#001520",
                                 border_color=CYAN_DIM if mode == "PRO" else BORDER,
                                 border_width=1, corner_radius=2,
                                 text_color=GREEN if mode == "PRO" else TEXT_MUTED,
-                                hover_color="#00ffff22",
+                                hover_color="#002d3d",
                                 command=lambda m=mode: self._set_mode(m))
             btn.pack(side="left", padx=1)
             self.mode_btns[mode] = btn
@@ -294,11 +297,11 @@ class JarvisApp(ctk.CTk):
             active = pack == "Professional"
             btn = ctk.CTkButton(inner, text=pack, height=28,
                                 font=ctk.CTkFont("Courier New", 10),
-                                fg_color="#00ffff0f" if active else "#00ffff05",
+                                fg_color="#001e2e" if active else "#000f1a",
                                 border_color=CYAN_DIM if active else BORDER,
                                 border_width=1, corner_radius=2,
                                 text_color=GREEN if active else TEXT_MUTED,
-                                hover_color="#00ffff15",
+                                hover_color="#002535",
                                 anchor="w",
                                 command=lambda p=pack: self._set_voice_pack(p))
             btn.pack(fill="x", padx=12, pady=2)
@@ -308,7 +311,7 @@ class JarvisApp(ctk.CTk):
 
         # ── Uptime ────────────────────────────────────────────────────────────
         self._section_label(inner, "UPTIME")
-        uptime_box = ctk.CTkFrame(inner, height=52, fg_color="#00ffff08",
+        uptime_box = ctk.CTkFrame(inner, height=52, fg_color="#001520",
                                    border_color=BORDER, border_width=1, corner_radius=2)
         uptime_box.pack(fill="x", padx=12, pady=(0, 8))
         uptime_box.pack_propagate(False)
@@ -335,10 +338,10 @@ class JarvisApp(ctk.CTk):
         for label, cmd in cmds:
             btn = ctk.CTkButton(inner, text=label, height=26,
                                 font=ctk.CTkFont("Courier New", 10),
-                                fg_color="#00ffff05",
+                                fg_color="#000f1a",
                                 border_color=BORDER, border_width=1,
                                 corner_radius=2, text_color=TEXT_MUTED,
-                                hover_color="#00ffff12", anchor="w",
+                                hover_color="#001a2a", anchor="w",
                                 command=lambda c=cmd: self._quick_cmd(c))
             btn.pack(fill="x", padx=12, pady=2)
 
@@ -389,16 +392,16 @@ class JarvisApp(ctk.CTk):
         # Prompt prefix
         ctk.CTkLabel(bar, text=">",
                      font=ctk.CTkFont("Courier New", 16, "bold"),
-                     text_color=f"{CYAN}88").pack(side="left", padx=(16, 6), pady=12)
+                     text_color=TEXT_MUTED).pack(side="left", padx=(16, 6), pady=12)
 
         # Input field
         self.input_entry = ctk.CTkEntry(bar, placeholder_text="Enter command or speak...",
-                                         font=ctk.CTkFont("Courier New", 13),
-                                         fg_color="transparent",
-                                         border_color="transparent",
-                                         border_width=0,
-                                         text_color=TEXT_PRI,
-                                         placeholder_text_color=TEXT_FAINT)
+                                 font=ctk.CTkFont("Courier New", 13),
+                                 fg_color=BG_PANEL,
+                                 border_color=BG_PANEL,
+                                 border_width=0,
+                                 text_color=TEXT_PRI,
+                                 placeholder_text_color=TEXT_FAINT)
         self.input_entry.pack(side="left", fill="x", expand=True, pady=12)
         self.input_entry.bind("<Return>", lambda e: self._on_send())
 
@@ -408,33 +411,33 @@ class JarvisApp(ctk.CTk):
 
         self.mic_btn = ctk.CTkButton(btn_frame, text="MIC", width=34, height=34,
                                       font=ctk.CTkFont("Courier New", 9),
-                                      fg_color="#00ffff14",
+                                      fg_color="#002233",
                                       border_color=CYAN_DIM, border_width=1,
                                       corner_radius=2, text_color=CYAN,
-                                      hover_color="#00ffff25",
+                                      hover_color="#002d3d",
                                       command=self._toggle_mic)
         self.mic_btn.pack(side="left", padx=2)
 
         ctk.CTkButton(btn_frame, text="CAP", width=34, height=34,
                       font=ctk.CTkFont("Courier New", 9),
-                      fg_color="#00ffff08", border_color=BORDER, border_width=1,
+                      fg_color="#001520", border_color=BORDER, border_width=1,
                       corner_radius=2, text_color=TEXT_MUTED,
-                      hover_color="#00ffff12",
+                      hover_color="#001a2a",
                       command=self._on_screenshot).pack(side="left", padx=2)
 
         ctk.CTkButton(btn_frame, text="NOTE", width=34, height=34,
                       font=ctk.CTkFont("Courier New", 9),
-                      fg_color="#00ffff08", border_color=BORDER, border_width=1,
+                      fg_color="#001520", border_color=BORDER, border_width=1,
                       corner_radius=2, text_color=TEXT_MUTED,
-                      hover_color="#00ffff12",
+                      hover_color="#001a2a",
                       command=self._on_note).pack(side="left", padx=2)
 
         ctk.CTkButton(btn_frame, text="SEND", width=60, height=34,
                       font=ctk.CTkFont("Courier New", 10, "bold"),
-                      fg_color="#00ffff14",
+                      fg_color="#002233",
                       border_color=CYAN_DIM, border_width=1,
                       corner_radius=2, text_color=CYAN,
-                      hover_color="#00ffff25",
+                      hover_color="#002d3d",
                       command=self._on_send).pack(side="left", padx=(4, 0))
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -452,7 +455,7 @@ class JarvisApp(ctk.CTk):
         now = datetime.datetime.now().strftime("%H:%M:%S")
         sender = "SACHIN" if is_user else "JARVIS"
         label_color = AMBER if is_user else CYAN_DIM
-        bubble_bg   = "#1e0e0080" if is_user else "#00243880"
+        bubble_bg   = "#1e0e00" if is_user else "#002438"
         border_col  = AMBER if is_user else CYAN
         text_color  = AMBER if is_user else TEXT_PRI
 
@@ -463,7 +466,7 @@ class JarvisApp(ctk.CTk):
         # Label
         lbl = ctk.CTkLabel(outer, text=f"{sender} — {now}",
                            font=ctk.CTkFont("Courier New", 9),
-                           text_color=f"{label_color}60",
+                           text_color=TEXT_FAINT,
                            anchor="e" if is_user else "w")
         lbl.pack(fill="x", padx=4, pady=(0, 2))
 
@@ -472,11 +475,11 @@ class JarvisApp(ctk.CTk):
         row.pack(fill="x")
 
         if not is_user:
-            ctk.CTkFrame(row, width=2, fg_color=f"{CYAN}66",
+            ctk.CTkFrame(row, width=2, fg_color=CYAN_DIM,
                          corner_radius=0).pack(side="left", fill="y")
 
         bubble = ctk.CTkFrame(row, fg_color=bubble_bg,
-                               border_color=f"{border_col}33",
+                               border_color=BORDER,
                                border_width=1, corner_radius=2)
         bubble.pack(side="left" if not is_user else "right",
                     fill="x", expand=True, padx=(4 if not is_user else 0, 0))
@@ -488,7 +491,7 @@ class JarvisApp(ctk.CTk):
                      anchor="w" if not is_user else "e").pack(padx=12, pady=10)
 
         if is_user:
-            ctk.CTkFrame(row, width=2, fg_color=f"{AMBER}80",
+            ctk.CTkFrame(row, width=2, fg_color=AMBER,
                          corner_radius=0).pack(side="right", fill="y")
 
         # Update exchange count
@@ -502,8 +505,8 @@ class JarvisApp(ctk.CTk):
     def _show_thinking(self):
         self._thinking_frame = ctk.CTkFrame(
             self.chat_scroll,
-            fg_color="#00243860",
-            border_color=f"{CYAN}22",
+            fg_color="#002438",
+            border_color=BORDER,
             border_width=1,
             corner_radius=2
         )
@@ -588,7 +591,7 @@ class JarvisApp(ctk.CTk):
 
         if self.mic_active:
             self.mic_btn.configure(
-                fg_color="#00ffcc25",
+                fg_color="#003d30",
                 border_color=GREEN,
                 text_color=GREEN,
                 text="■ MIC"
@@ -601,7 +604,7 @@ class JarvisApp(ctk.CTk):
         else:
             self.mic_animating = False
             self.mic_btn.configure(
-                fg_color="#00ffff14",
+                fg_color="#002233",
                 border_color=CYAN_DIM,
                 text_color=CYAN,
                 text="MIC"
@@ -616,7 +619,7 @@ class JarvisApp(ctk.CTk):
         # Pulse between colors
         current = self.mic_btn.cget("fg_color")
 
-        new_color = "#00ffcc40" if current == "#00ffcc25" else "#00ffcc25"
+        new_color = "#004d3a" if current == "#003d30" else "#003d30"
 
         self.mic_btn.configure(fg_color=new_color)
 
@@ -625,7 +628,7 @@ class JarvisApp(ctk.CTk):
     def _run_mic(self):
         """Record audio and transcribe on a background thread."""
         try:
-            if HAS_STT and whisper_model:
+            if HAS_STT and whisper_model and listen:
                 text = listen(whisper_model)
                 if text.strip():
                     self.msg_queue.put(("mic_input", text))
@@ -654,7 +657,7 @@ class JarvisApp(ctk.CTk):
         for m, btn in self.mode_btns.items():
             active = m == mode
             btn.configure(
-                fg_color="#00ffff1a" if active else "#00ffff08",
+                fg_color="#002d3d" if active else "#001520",
                 border_color=CYAN_DIM if active else BORDER,
                 text_color=GREEN if active else TEXT_MUTED,
             )
@@ -664,7 +667,7 @@ class JarvisApp(ctk.CTk):
         for p, btn in self.voice_pack_btns.items():
             active = p == pack
             btn.configure(
-                fg_color="#00ffff0f" if active else "#00ffff05",
+                fg_color="#001e2e" if active else "#000f1a",
                 border_color=CYAN_DIM if active else BORDER,
                 text_color=GREEN if active else TEXT_MUTED,
             )
@@ -720,12 +723,12 @@ class JarvisApp(ctk.CTk):
                 threading.Thread(target=speak, args=(data,), daemon=True).start()
 
         elif kind == "mic_input":
-            self.mic_btn.configure(fg_color="#00ffff14", border_color=CYAN_DIM,
+            self.mic_btn.configure(fg_color="#002233", border_color=CYAN_DIM,
                                    text_color=CYAN, text="MIC")
             self._process_input(data)
 
         elif kind == "mic_done":
-            self.mic_btn.configure(fg_color="#00ffff14", border_color=CYAN_DIM,
+            self.mic_btn.configure(fg_color="#002233", border_color=CYAN_DIM,
                                    text_color=CYAN, text="MIC")
             if not self.is_thinking:
                 self._update_status("SYSTEM ONLINE")

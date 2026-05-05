@@ -1,3 +1,5 @@
+from email.mime import text
+
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import os
@@ -24,9 +26,12 @@ from Piper_tts import speak
 
 class QwenChatbot:
     def __init__(self, model_name="Qwen/Qwen3.5-2B"):
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(model_name).to(self.device)
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+            device_map="cuda" if torch.cuda.is_available() else "cpu"
+        )
         self.history = []
 
     def generate_response(self, user_input, stream=True):
@@ -38,10 +43,11 @@ class QwenChatbot:
             add_generation_prompt=True
         )
 
-        inputs = self.tokenizer(text, return_tensors="pt").to(self.device)
+        device = next(self.model.parameters()).device
+        inputs = self.tokenizer(text, return_tensors="pt").to(torch.device)
         input_length = inputs["input_ids"].shape[-1]
 
-        generated_ids = self.model.generate(
+        generated_ids = self.model.generate(  # type: ignore[attr-defined]
             **inputs,
             max_new_tokens=256,
             do_sample=True, # enable sampling (more natural response)
@@ -59,14 +65,15 @@ class QwenChatbot:
 
 # ----------- CUSTOM TOOL DEFINITIONS (for Qwen Agent) -----------
 
-@register_tool('get_current_time')
-class GetCurrentTime(BaseTool):
-    description = "Get the current date and time in ISO format."
-    parameters = []
+if HAS_QWEN_AGENT:
+    @register_tool('get_current_time')
+    class GetCurrentTime(BaseTool):  # type: ignore[valid-type]
+        description = "Get the current date and time in ISO format."
+        parameters = []
 
-    def call(self, params: str, **kwargs) -> str:
-        from datetime import datetime
-        return datetime.now().isoformat()
+        def call(self, params: str, **kwargs) -> str:
+            from datetime import datetime
+            return datetime.now().isoformat()
 
 
 # Example Usage
@@ -130,7 +137,11 @@ if __name__ == "__main__":
         ]
 
         # Initialize the agent with the LLM config and tools
-        bot = Assistant(llm=llm_cfg, function_list=tools)
+        self.model = AutoModelForCausalLM.from_pretrained(  # type: ignore[assignment]
+            llm_cfg['model'],
+            dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+            device_map="cuda" if torch.cuda.is_available() else "cpu"
+        )
 
         # listen for user input and respond until "exit" is said
         user_input = listen(model)
@@ -139,7 +150,7 @@ if __name__ == "__main__":
             # Stream responses from the Assistant. Collect and print as they arrive.
             collected = ""
             try:
-                for chunk in bot.run(messages=messages):
+                for chunk in bot.run(messages=messages):  # type: ignore[arg-type]
                     # chunk may be a string or structured object depending on the backend
                     chunk_text = str(chunk)
                     print(chunk_text, end="", flush=True)
