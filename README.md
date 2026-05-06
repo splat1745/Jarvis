@@ -1,5 +1,5 @@
 # Jarvis
-A Jarvis style AI that lives in your computer, ready to serve your requests.
+A Jarvis type of AI that lives in your computer, ready to serve your requests.
 
 ## What can it do?
 Its an Ai that lives in your computer, and can do commands like make new projects, open apps and more to come!
