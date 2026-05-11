@@ -56,7 +56,7 @@ BG_PANEL     = "#000a19"
 BG_CARD      = "#001428"
 CYAN         = "#00ffff"
 CYAN_DIM     = "#00ccff"
-CYAN_BORDER  = "#001e2e"
+BORDER  = "#001e2e"
 GREEN        = "#00ffcc"
 AMBER        = "#ffbf1a"
 TEXT_PRI     = "#a1d9f0"
@@ -66,14 +66,11 @@ BORDER       = "#0d2233"
 
 # Tk/CustomTkinter do not accept 8-digit hex colors, so these are solid
 # approximations of the translucent shades used in the UI.
-CYAN_BG_LOW  = "#001414"
-CYAN_BG_MID  = "#002020"
-CYAN_BG_HIGH = "#003535"
-CYAN_BG_HOT  = "#004d4d"
-GREEN_BG_LOW = "#00332a"
-GREEN_BG_HOT = "#00665a"
-AMBER_BG     = "#1e0e00"
-BLUE_BG      = "#002438"
+"#001520"  = "#001414"
+"#002233"  = "#002020"
+"#002d3d"  = "#004d4d"
+"#1e0e00"     = "#1e0e00"
+"#002438"      = "#002438"
 
 
 # ── App setup ──────────────────────────────────────────────────────────────────
@@ -215,7 +212,7 @@ class JarvisApp(ctk.CTk):
 
         inner = ctk.CTkScrollableFrame(sb, fg_color="transparent",
                                         scrollbar_button_color=BORDER,
-                                        scrollbar_button_hover_color=CYAN_BORDER)
+                                        scrollbar_button_hover_color=BORDER)
         inner.pack(fill="both", expand=True, padx=0, pady=0)
 
         # ── System Resources ─────────────────────────────────────────────────
@@ -269,7 +266,7 @@ class JarvisApp(ctk.CTk):
         # ── Wake Words ────────────────────────────────────────────────────────
         self._section_label(inner, "WAKE WORDS")
         for ww in ["Jarvis daddy's home", "Let's get cookin", "Hey Jarvis"]:
-            pill = ctk.CTkFrame(inner, height=26, fg_color=CYAN_BG_LOW,
+            pill = ctk.CTkFrame(inner, height=26, fg_color="#001520",
                                 border_color=BORDER, border_width=1, corner_radius=2)
             pill.pack(fill="x", padx=16, pady=3)
             pill.pack_propagate(False)
@@ -290,7 +287,7 @@ class JarvisApp(ctk.CTk):
 
         inner = ctk.CTkScrollableFrame(rp, fg_color="transparent",
                                         scrollbar_button_color=BORDER,
-                                        scrollbar_button_hover_color=CYAN_BORDER)
+                                        scrollbar_button_hover_color=BORDER)
         inner.pack(fill="both", expand=True)
 
         # ── Voice Pack ────────────────────────────────────────────────────────
@@ -302,11 +299,11 @@ class JarvisApp(ctk.CTk):
         for mode in ["PRO", "GEN Z", "CALM"]:
             btn = ctk.CTkButton(mode_row, text=mode, width=48, height=24,
                                 font=ctk.CTkFont("Courier New", 9),
-                                fg_color=CYAN_BG_HIGH if mode == "PRO" else CYAN_BG_LOW,
+                                fg_color="#002d3d" if mode == "PRO" else "#001520",
                                 border_color=CYAN_DIM if mode == "PRO" else BORDER,
                                 border_width=1, corner_radius=2,
                                 text_color=GREEN if mode == "PRO" else TEXT_MUTED,
-                                hover_color=CYAN_BG_HOT,
+                                hover_color="#002d3d",
                                 command=lambda m=mode: self._set_mode(m))
             btn.pack(side="left", padx=1)
             self.mode_btns[mode] = btn
@@ -316,11 +313,11 @@ class JarvisApp(ctk.CTk):
             active = pack == "Professional"
             btn = ctk.CTkButton(inner, text=pack, height=28,
                                 font=ctk.CTkFont("Courier New", 10),
-                                fg_color=CYAN_BG_MID if active else CYAN_BG_LOW,
+                                fg_color="#002233" if active else "#001520",
                                 border_color=CYAN_DIM if active else BORDER,
                                 border_width=1, corner_radius=2,
                                 text_color=GREEN if active else TEXT_MUTED,
-                                hover_color=CYAN_BG_MID,
+                                hover_color="#002233",
                                 anchor="w",
                                 command=lambda p=pack: self._set_voice_pack(p))
             btn.pack(fill="x", padx=12, pady=2)
@@ -330,7 +327,7 @@ class JarvisApp(ctk.CTk):
 
         # ── Uptime ────────────────────────────────────────────────────────────
         self._section_label(inner, "UPTIME")
-        uptime_box = ctk.CTkFrame(inner, height=52, fg_color=CYAN_BG_LOW,
+        uptime_box = ctk.CTkFrame(inner, height=52, fg_color="#001520",
                                    border_color=BORDER, border_width=1, corner_radius=2)
         uptime_box.pack(fill="x", padx=12, pady=(0, 8))
         uptime_box.pack_propagate(False)
@@ -357,10 +354,10 @@ class JarvisApp(ctk.CTk):
         for label, cmd in cmds:
             btn = ctk.CTkButton(inner, text=label, height=26,
                                 font=ctk.CTkFont("Courier New", 10),
-                                fg_color=CYAN_BG_LOW,
+                                fg_color="#001520",
                                 border_color=BORDER, border_width=1,
                                 corner_radius=2, text_color=TEXT_MUTED,
-                                hover_color=CYAN_BG_MID, anchor="w",
+                                hover_color="#002233", anchor="w",
                                 command=lambda c=cmd: self._quick_cmd(c))
             btn.pack(fill="x", padx=12, pady=2)
 
@@ -387,7 +384,7 @@ class JarvisApp(ctk.CTk):
         # Chat messages area (scrollable)
         self.chat_scroll = ctk.CTkScrollableFrame(center, fg_color="transparent",
                                                    scrollbar_button_color=BORDER,
-                                                   scrollbar_button_hover_color=CYAN_BORDER)
+                                                   scrollbar_button_hover_color=BORDER)
         self.chat_scroll.pack(fill="both", expand=True, padx=0, pady=0)
         self.exchange_count = 0
 
@@ -430,33 +427,33 @@ class JarvisApp(ctk.CTk):
 
         self.mic_btn = ctk.CTkButton(btn_frame, text="MIC", width=34, height=34,
                                       font=ctk.CTkFont("Courier New", 9),
-                                      fg_color=CYAN_BG_MID,
+                                      fg_color="#002233",
                                       border_color=CYAN_DIM, border_width=1,
                                       corner_radius=2, text_color=CYAN,
-                                      hover_color=CYAN_BG_HOT,
+                                      hover_color="#002d3d",
                                       command=self._toggle_mic)
         self.mic_btn.pack(side="left", padx=2)
 
         ctk.CTkButton(btn_frame, text="CAP", width=34, height=34,
                       font=ctk.CTkFont("Courier New", 9),
-                      fg_color=CYAN_BG_LOW, border_color=BORDER, border_width=1,
+                      fg_color="#001520", border_color=BORDER, border_width=1,
                       corner_radius=2, text_color=TEXT_MUTED,
-                      hover_color=CYAN_BG_MID,
+                      hover_color="#002233",
                       command=self._on_screenshot).pack(side="left", padx=2)
 
         ctk.CTkButton(btn_frame, text="NOTE", width=34, height=34,
                       font=ctk.CTkFont("Courier New", 9),
-                      fg_color=CYAN_BG_LOW, border_color=BORDER, border_width=1,
+                      fg_color="#001520", border_color=BORDER, border_width=1,
                       corner_radius=2, text_color=TEXT_MUTED,
-                      hover_color=CYAN_BG_MID,
+                      hover_color="#002233",
                       command=self._on_note).pack(side="left", padx=2)
 
         ctk.CTkButton(btn_frame, text="SEND", width=60, height=34,
                       font=ctk.CTkFont("Courier New", 10, "bold"),
-                      fg_color=CYAN_BG_MID,
+                      fg_color="#002233",
                       border_color=CYAN_DIM, border_width=1,
                       corner_radius=2, text_color=CYAN,
-                      hover_color=CYAN_BG_HOT,
+                      hover_color="#002d3d",
                       command=self._on_send).pack(side="left", padx=(4, 0))
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -474,8 +471,8 @@ class JarvisApp(ctk.CTk):
         now = datetime.datetime.now().strftime("%H:%M:%S")
         sender = "SACHIN" if is_user else "JARVIS"
         label_color = TEXT_FAINT
-        bubble_bg   = AMBER_BG if is_user else BLUE_BG
-        border_col  = AMBER if is_user else CYAN_BORDER
+        bubble_bg   = "#1e0e00" if is_user else "#002438"
+        border_col  = AMBER if is_user else BORDER
         text_color  = AMBER if is_user else TEXT_PRI
 
         # Outer container
@@ -524,8 +521,8 @@ class JarvisApp(ctk.CTk):
     def _show_thinking(self):
         self._thinking_frame = ctk.CTkFrame(
             self.chat_scroll,
-            fg_color=BLUE_BG,
-            border_color=CYAN_BORDER,
+            fg_color="#002438",
+            border_color=BORDER,
             border_width=1,
             corner_radius=2
         )
@@ -620,7 +617,7 @@ class JarvisApp(ctk.CTk):
 
         if self.mic_active:
             self.mic_btn.configure(
-                fg_color=GREEN_BG_LOW,
+                fg_color="#003d30",
                 border_color=GREEN,
                 text_color=GREEN,
                 text="■ MIC"
@@ -633,7 +630,7 @@ class JarvisApp(ctk.CTk):
         else:
             self.mic_animating = False
             self.mic_btn.configure(
-                fg_color=CYAN_BG_MID,
+                fg_color="#002233",
                 border_color=CYAN_DIM,
                 text_color=CYAN,
                 text="MIC"
@@ -648,7 +645,7 @@ class JarvisApp(ctk.CTk):
         # Pulse between colors
         current = self.mic_btn.cget("fg_color")
 
-        new_color = GREEN_BG_HOT if current == GREEN_BG_LOW else GREEN_BG_LOW
+        new_color = "#004d3a" if current == "#003d30" else "#003d30"
 
         self.mic_btn.configure(fg_color=new_color)
 
@@ -686,7 +683,7 @@ class JarvisApp(ctk.CTk):
         for m, btn in self.mode_btns.items():
             active = m == mode
             btn.configure(
-                fg_color=CYAN_BG_HIGH if active else CYAN_BG_LOW,
+                fg_color="#002d3d" if active else "#001520",
                 border_color=CYAN_DIM if active else BORDER,
                 text_color=GREEN if active else TEXT_MUTED,
             )
@@ -696,7 +693,7 @@ class JarvisApp(ctk.CTk):
         for p, btn in self.voice_pack_btns.items():
             active = p == pack
             btn.configure(
-                fg_color=CYAN_BG_MID if active else CYAN_BG_LOW,
+                fg_color="#002233" if active else "#001520",
                 border_color=CYAN_DIM if active else BORDER,
                 text_color=GREEN if active else TEXT_MUTED,
             )
@@ -752,12 +749,12 @@ class JarvisApp(ctk.CTk):
                 threading.Thread(target=speak, args=(data,), daemon=True).start()
 
         elif kind == "mic_input":
-            self.mic_btn.configure(fg_color=CYAN_BG_MID, border_color=CYAN_DIM,
+            self.mic_btn.configure(fg_color="#002233", border_color=CYAN_DIM,
                                    text_color=CYAN, text="MIC")
             self._process_input(data)
 
         elif kind == "mic_done":
-            self.mic_btn.configure(fg_color=CYAN_BG_MID, border_color=CYAN_DIM,
+            self.mic_btn.configure(fg_color="#002233", border_color=CYAN_DIM,
                                    text_color=CYAN, text="MIC")
             if not self.is_thinking:
                 self._update_status("SYSTEM ONLINE")

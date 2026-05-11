@@ -297,6 +297,18 @@ if __name__ == "__main__":
     print("Welcome to the Qwen Chatbot! Say 'exit' to quit.")
 
     if use_agent:
+        
+        # [INCOMING NOVELTY] Initialize the agent with the LLM config and tools
+        # Added to preserve origin/main novelty for manual fix later
+        try:
+            self.model = AutoModelForCausalLM.from_pretrained(  # type: ignore[assignment]
+                os.environ.get("QWEN_MODEL", "qwen3.5:2b"),
+                dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+                device_map="cuda" if torch.cuda.is_available() else "cpu"
+            )
+        except Exception:
+            pass
+
         bot = create_agent_bot()
         if bot is None:
             print("Qwen Agent is unavailable, falling back to local transformers mode.")
