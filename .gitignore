@@ -1,4 +1,7 @@
 .venv
+# Python cache
+__pycache__/
+*.pyc
 # Piper runtime
 piper/
 *.onnx

@@ -39,6 +39,14 @@ def speak(text: str, speed: float = 0.82) -> None:
     # Clean and prepare the text
     formatted_text = format_for_speech(text)
 
+    if not os.path.exists(PIPER_PATH):
+        print(f"[TTS] Piper executable not found at {PIPER_PATH}; skipping speech.")
+        return
+
+    if not os.path.exists(VOICE_MODEL):
+        print(f"[TTS] Piper voice model not found at {VOICE_MODEL}; skipping speech.")
+        return
+
     # Generate unique filename to avoid overwriting
     filename = os.path.join(BASE_DIR, f"output_{uuid.uuid4().hex}.wav")
 

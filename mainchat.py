@@ -21,6 +21,14 @@ import json
 # custom files
 from Listen import listen, model
 from Piper_tts import speak
+from jarvis_tools import (
+    create_note,
+    create_workspace,
+    get_system_status,
+    launch_application,
+    open_note_file,
+    summarize_pending_work,
+)
 
 class QwenChatbot:
     def __init__(self, model_name="Qwen/Qwen3.5-2B"):
@@ -69,6 +77,188 @@ class GetCurrentTime(BaseTool):
         return datetime.now().isoformat()
 
 
+@register_tool('launch_application')
+class LaunchApplication(BaseTool):
+    description = "Launch an application, file, folder, or URL."
+    parameters = {
+        'type': 'object',
+        'properties': {
+            'application': {
+                'type': 'string',
+                'description': 'Optional application executable or command to launch.'
+            },
+            'target': {
+                'type': 'string',
+                'description': 'Optional file, folder, or URL to open.'
+            },
+            'arguments': {
+                'type': 'array',
+                'items': {'type': 'string'},
+                'description': 'Optional command-line arguments for the application.'
+            },
+        },
+        'required': []
+    }
+
+    def call(self, params: str | dict, **kwargs) -> str:
+        args = self._verify_json_format_args(params)
+        return launch_application(
+            application=args.get('application'),
+            target=args.get('target'),
+            arguments=args.get('arguments'),
+        )
+
+
+@register_tool('create_workspace')
+class CreateWorkspace(BaseTool):
+    description = "Create a new local workspace folder and open it with the default handler."
+    parameters = {
+        'type': 'object',
+        'properties': {
+            'name': {
+                'type': 'string',
+                'description': 'Optional workspace name. A timestamped name is used when omitted.'
+            }
+        },
+        'required': []
+    }
+
+    def call(self, params: str | dict, **kwargs) -> str:
+        args = self._verify_json_format_args(params)
+        return create_workspace(args.get('name'))
+
+
+@register_tool('open_note_file')
+class OpenNoteFile(BaseTool):
+    description = "Open the current note file for fast note taking."
+    parameters = {
+        'type': 'object',
+        'properties': {
+            'title': {
+                'type': 'string',
+                'description': 'Optional note title.'
+            },
+            'body': {
+                'type': 'string',
+                'description': 'Optional note text to append before opening the file.'
+            }
+        },
+        'required': []
+    }
+
+    def call(self, params: str | dict, **kwargs) -> str:
+        args = self._verify_json_format_args(params)
+        return open_note_file(args.get('title'), args.get('body'))
+
+
+@register_tool('create_note')
+class CreateNote(BaseTool):
+    description = "Append a note to the daily Jarvis notes file and open it in VS Code."
+    parameters = {
+        'type': 'object',
+        'properties': {
+            'text': {
+                'type': 'string',
+                'description': 'The note text to save.'
+            },
+            'title': {
+                'type': 'string',
+                'description': 'Optional title for the note section.'
+            }
+        },
+        'required': ['text']
+    }
+
+    def call(self, params: str | dict, **kwargs) -> str:
+        args = self._verify_json_format_args(params)
+        return create_note(args['text'], title=args.get('title'))
+
+
+@register_tool('get_system_status')
+class GetSystemStatus(BaseTool):
+    description = "Return a concise machine status summary for the GUI sidebar."
+    parameters = {
+        'type': 'object',
+        'properties': {},
+        'required': [],
+    }
+
+    def call(self, params: str | dict, **kwargs) -> str:
+        self._verify_json_format_args(params)
+        return get_system_status()
+
+
+@register_tool('summarize_pending_work')
+class SummarizePendingWork(BaseTool):
+    description = "Summarize pending work items from the roadmap and plan files."
+    parameters = {
+        'type': 'object',
+        'properties': {
+            'limit': {
+                'type': 'integer',
+                'minimum': 1,
+                'maximum': 20,
+                'default': 8,
+                'description': 'Maximum number of items to include from each source.'
+            }
+        },
+        'required': []
+    }
+
+    def call(self, params: str | dict, **kwargs) -> str:
+        args = self._verify_json_format_args(params)
+        return summarize_pending_work(int(args.get('limit', 8)))
+
+
+def create_local_chatbot(model_name: str | None = None) -> QwenChatbot:
+    return QwenChatbot(model_name or os.environ.get("QWEN_MODEL", "Qwen/Qwen3.5-2B"))
+
+
+def build_agent_tools() -> list:
+    tools = [
+        'get_current_time',
+        'launch_application',
+        'create_workspace',
+        'open_note_file',
+        'create_note',
+        'get_system_status',
+         'summarize_pending_work',
+    ]
+
+    if os.environ.get("JARVIS_ENABLE_MCP", "0") == "1":
+        tools.append({
+            'mcpServers': {
+                "filesystem": {
+                    "command": "npx",
+                    "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
+                },
+                "duckduckgo": {
+                    "command": "uvx",
+                    "args": ["duckduckgo-mcp-server"]
+                }
+            }
+        })
+
+    return tools
+
+
+def create_agent_bot():
+    if not HAS_QWEN_AGENT:
+        return None
+
+    llm_cfg = {
+        'model': os.environ.get("QWEN_MODEL", "qwen3.5:2b"),
+        'model_server': os.environ.get("QWEN_MODEL_SERVER", "http://localhost:11434/v1"),
+        'api_key': 'EMPTY',
+    }
+    return Assistant(llm=llm_cfg, function_list=build_agent_tools())
+
+
+def _maybe_speak(text: str) -> None:
+    if text and "\n" not in text and len(text) <= 180:
+        speak(text)
+
+
 # Example Usage
 if __name__ == "__main__":
     # -------------------------------------------------------------------------
@@ -106,57 +296,41 @@ if __name__ == "__main__":
 
     print("Welcome to the Qwen Chatbot! Say 'exit' to quit.")
 
-    if use_agent and HAS_QWEN_AGENT:
-        # For ollama to run locally
-        llm_cfg = {
-            'model': os.environ.get("QWEN_MODEL", "qwen3.5:2b"),
-            'model_server': os.environ.get("QWEN_MODEL_SERVER", "http://localhost:11434/v1"),
-            'api_key': 'EMPTY',
-        }
-
-        # Tool definitions for the agent. You can add custom tools or MCP servers here.
-        tools = [
-            'get_current_time', # Custom tool
-            {'mcpServers': { 
-                "filesystem": {
-                    "command": "npx",
-                    "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
-                },
-                "duckduckgo": {
-                    "command": "uvx",
-                    "args": ["duckduckgo-mcp-server"]
-                }
-            }}
-        ]
-
-        # Initialize the agent with the LLM config and tools
-        bot = Assistant(llm=llm_cfg, function_list=tools)
-
-        # listen for user input and respond until "exit" is said
-        user_input = listen(model)
-        while user_input.lower() != "exit":
-            messages = [{'role': 'user', 'content': user_input}]
-            # Stream responses from the Assistant. Collect and print as they arrive.
-            collected = ""
-            try:
-                for chunk in bot.run(messages=messages):
-                    # chunk may be a string or structured object depending on the backend
-                    chunk_text = str(chunk)
-                    print(chunk_text, end="", flush=True)
-                    collected += chunk_text
-            except Exception as e:
-                print("\nAgent error:", e)
-
-            print("\n--- Final response ---")
-            if collected:
-                speak(collected)
-
-            print("----------------------")
+    if use_agent:
+        bot = create_agent_bot()
+        if bot is None:
+            print("Qwen Agent is unavailable, falling back to local transformers mode.")
+            chatbot = create_local_chatbot()
             user_input = listen(model)
+            while user_input.lower() != "exit":
+                response = chatbot.generate_response(user_input)
+                print(f"Bot: {response}")
+                speak(response)
+                print("----------------------")
+                user_input = listen(model)
+        else:
+            user_input = listen(model)
+            while user_input.lower() != "exit":
+                messages = [{'role': 'user', 'content': user_input}]
+                collected = ""
+                try:
+                    for chunk in bot.run(messages=messages):
+                        chunk_text = str(chunk)
+                        print(chunk_text, end="", flush=True)
+                        collected += chunk_text
+                except Exception as e:
+                    print("\nAgent error:", e)
+
+                print("\n--- Final response ---")
+                if collected:
+                    speak(collected)
+
+                print("----------------------")
+                user_input = listen(model)
 
     else:
         # Fallback to local model (transformers)
-        chatbot = QwenChatbot()
+        chatbot = create_local_chatbot()
         user_input = listen(model)
         while user_input.lower() != "exit":
             response = chatbot.generate_response(user_input)
