@@ -10,10 +10,6 @@ Run:
     python jarvis_gui.py
 """
 
-import os
-
-os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
-
 import customtkinter as ctk
 import threading
 import time
@@ -26,10 +22,11 @@ import random
 try:
     from Listen import listen, model as whisper_model
     HAS_STT = True
-except Exception:
+except Exception as e:
     HAS_STT = False
     whisper_model = None
-    print("[JARVIS] Listen.py not found — mic input disabled")
+    listen = None
+    print(f"[JARVIS] Listen.py not found — mic input disabled ({e})")
 
 try:
     from Piper_tts import speak
@@ -39,16 +36,22 @@ except Exception:
     speak = lambda text: print(f"[TTS] {text}")
     print("[JARVIS] Piper_tts.py not found — TTS disabled")
 
-try:
-    USE_AGENT = os.environ.get("USE_QWEN_AGENT", "0") == "1"
-    from mainchat import create_agent_bot, create_local_chatbot
-    _agent_bot_instance = None
-    _chatbot_instance = None
-    HAS_LLM = True
-except Exception:
-    HAS_LLM = False
-    print("[JARVIS] mainchat.py not found — using echo mode")
+import os
+USE_AGENT = os.environ.get("USE_QWEN_AGENT", "0") == "1"
 
+import os
+USE_AGENT = os.environ.get("USE_QWEN_AGENT", "0") == "1"
+HAS_LLM = False
+QwenChatbot = None
+
+try:
+    if USE_AGENT:
+        from qwen_agent.agents import Assistant
+    else:
+        from mainchat import QwenChatbot
+    HAS_LLM = True
+except Exception as e:
+    print(f"[JARVIS] LLM not loaded — using echo mode ({e})")
 
 # ── Color palette (from Figma) ─────────────────────────────────────────────────
 BG_MAIN      = "#050d14"
@@ -56,21 +59,20 @@ BG_PANEL     = "#000a19"
 BG_CARD      = "#001428"
 CYAN         = "#00ffff"
 CYAN_DIM     = "#00ccff"
-BORDER  = "#001e2e"
+CYAN_BORDER  = "#001e2e"
 GREEN        = "#00ffcc"
 AMBER        = "#ffbf1a"
 TEXT_PRI     = "#a1d9f0"
 TEXT_MUTED   = "#3d7a99"
 TEXT_FAINT   = "#1a4d66"
 BORDER       = "#0d2233"
-
-# Tk/CustomTkinter do not accept 8-digit hex colors, so these are solid
-# approximations of the translucent shades used in the UI.
-"#001520"  = "#001414"
-"#002233"  = "#002020"
-"#002d3d"  = "#004d4d"
-"#1e0e00"     = "#1e0e00"
-"#002438"      = "#002438"
+BORDER_MID     = "#0d3344"
+BG_CYAN_FAINT  = "#001520"
+BG_CYAN_LOW    = "#001a2a"
+BG_CYAN_MID    = "#002233"
+BG_CYAN_STRONG = "#002d3d"
+BG_JARVIS_MSG  = "#002438"
+BG_USER_MSG    = "#1e0e00"
 
 
 # ── App setup ──────────────────────────────────────────────────────────────────
@@ -98,7 +100,6 @@ class JarvisApp(ctk.CTk):
 
         # LLM instance (loaded once, reused)
         self.chatbot = None
-        self.agent_bot = None
         self._init_llm_async()
 
         # Build layout
@@ -113,20 +114,10 @@ class JarvisApp(ctk.CTk):
     # ── LLM init (off main thread so UI doesn't freeze) ───────────────────────
     def _init_llm_async(self):
         def _load():
-            global _chatbot_instance, _agent_bot_instance
-            if HAS_LLM and USE_AGENT:
+            global _chatbot_instance
+            if HAS_LLM and not USE_AGENT and QwenChatbot is not None:
                 try:
-                    _agent_bot_instance = create_agent_bot()
-                    self.agent_bot = _agent_bot_instance
-                    if self.agent_bot is None:
-                        _chatbot_instance = create_local_chatbot()
-                        self.chatbot = _chatbot_instance
-                    self.msg_queue.put(("status", "SYSTEM ONLINE"))
-                except Exception as e:
-                    self.msg_queue.put(("status", f"LLM ERROR: {e}"))
-            elif HAS_LLM:
-                try:
-                    _chatbot_instance = create_local_chatbot()
+                    _chatbot_instance = QwenChatbot()
                     self.chatbot = _chatbot_instance
                     self.msg_queue.put(("status", "SYSTEM ONLINE"))
                 except Exception as e:
@@ -212,7 +203,7 @@ class JarvisApp(ctk.CTk):
 
         inner = ctk.CTkScrollableFrame(sb, fg_color="transparent",
                                         scrollbar_button_color=BORDER,
-                                        scrollbar_button_hover_color=BORDER)
+                                        scrollbar_button_hover_color=CYAN_BORDER)
         inner.pack(fill="both", expand=True, padx=0, pady=0)
 
         # ── System Resources ─────────────────────────────────────────────────
@@ -287,7 +278,7 @@ class JarvisApp(ctk.CTk):
 
         inner = ctk.CTkScrollableFrame(rp, fg_color="transparent",
                                         scrollbar_button_color=BORDER,
-                                        scrollbar_button_hover_color=BORDER)
+                                        scrollbar_button_hover_color=CYAN_BORDER)
         inner.pack(fill="both", expand=True)
 
         # ── Voice Pack ────────────────────────────────────────────────────────
@@ -313,11 +304,11 @@ class JarvisApp(ctk.CTk):
             active = pack == "Professional"
             btn = ctk.CTkButton(inner, text=pack, height=28,
                                 font=ctk.CTkFont("Courier New", 10),
-                                fg_color="#002233" if active else "#001520",
+                                fg_color="#001e2e" if active else "#000f1a",
                                 border_color=CYAN_DIM if active else BORDER,
                                 border_width=1, corner_radius=2,
                                 text_color=GREEN if active else TEXT_MUTED,
-                                hover_color="#002233",
+                                hover_color="#002535",
                                 anchor="w",
                                 command=lambda p=pack: self._set_voice_pack(p))
             btn.pack(fill="x", padx=12, pady=2)
@@ -344,20 +335,20 @@ class JarvisApp(ctk.CTk):
         # ── Quick Commands ────────────────────────────────────────────────────
         self._section_label(inner, "QUICK COMMANDS")
         cmds = [
-            ("Launch App",       "launch application"),
-            ("Create Workspace", "create workspace"),
-            ("Open Notes",       "open note file"),
-            ("Make Note",        "create note"),
-            ("System Status",    "system status"),
-            ("Pending Work",     "summarize pending work"),
+            ("+ New Repo",        "make new repo"),
+            ("Open VSCode",       "open vs code"),
+            ("Note Mode",         "start note mode"),
+            ("System Status",     "system status"),
+            ("Check Assignments", "check assignments"),
+            ("Screenshot",        "take a screenshot"),
         ]
         for label, cmd in cmds:
             btn = ctk.CTkButton(inner, text=label, height=26,
                                 font=ctk.CTkFont("Courier New", 10),
-                                fg_color="#001520",
+                                fg_color="#000f1a",
                                 border_color=BORDER, border_width=1,
                                 corner_radius=2, text_color=TEXT_MUTED,
-                                hover_color="#002233", anchor="w",
+                                hover_color="#001a2a", anchor="w",
                                 command=lambda c=cmd: self._quick_cmd(c))
             btn.pack(fill="x", padx=12, pady=2)
 
@@ -384,15 +375,24 @@ class JarvisApp(ctk.CTk):
         # Chat messages area (scrollable)
         self.chat_scroll = ctk.CTkScrollableFrame(center, fg_color="transparent",
                                                    scrollbar_button_color=BORDER,
-                                                   scrollbar_button_hover_color=BORDER)
+                                                   scrollbar_button_hover_color=CYAN_BORDER)
         self.chat_scroll.pack(fill="both", expand=True, padx=0, pady=0)
         self.exchange_count = 0
 
         # Add welcome message
-        self._add_jarvis_message(
-            "Good morning, Sachin. All systems initialising. "
-            "Say 'Hey Jarvis' or type a command below."
-        )
+        try:
+             from profile_db import JarvisDB
+             _db = JarvisDB()
+             summary = _db.get_summary()
+             welcome = (
+                  f"Good morning, {summary['user_name']}. All systems online. "
+                  f"You have {summary['notes']} notes and {summary['projects']} active projects. "
+                  f"Say 'Hey Jarvis' or type a command below."
+                  )
+        except Exception:
+            welcome = "Good morning, Sachin. All systems initialising. Say 'Hey Jarvis' or type a command below."
+            self._add_jarvis_message(welcome)
+
 
         # Input bar
         self._build_input_bar(center)
@@ -408,16 +408,16 @@ class JarvisApp(ctk.CTk):
         # Prompt prefix
         ctk.CTkLabel(bar, text=">",
                      font=ctk.CTkFont("Courier New", 16, "bold"),
-                     text_color=CYAN_DIM).pack(side="left", padx=(16, 6), pady=12)
+                     text_color=TEXT_MUTED).pack(side="left", padx=(16, 6), pady=12)
 
         # Input field
         self.input_entry = ctk.CTkEntry(bar, placeholder_text="Enter command or speak...",
-                                         font=ctk.CTkFont("Courier New", 13),
-                                         fg_color="transparent",
-                                         border_color=BG_PANEL,
-                                         border_width=0,
-                                         text_color=TEXT_PRI,
-                                         placeholder_text_color=TEXT_FAINT)
+                                 font=ctk.CTkFont("Courier New", 13),
+                                 fg_color=BG_PANEL,
+                                 border_color=BG_PANEL,
+                                 border_width=0,
+                                 text_color=TEXT_PRI,
+                                 placeholder_text_color=TEXT_FAINT)
         self.input_entry.pack(side="left", fill="x", expand=True, pady=12)
         self.input_entry.bind("<Return>", lambda e: self._on_send())
 
@@ -438,14 +438,14 @@ class JarvisApp(ctk.CTk):
                       font=ctk.CTkFont("Courier New", 9),
                       fg_color="#001520", border_color=BORDER, border_width=1,
                       corner_radius=2, text_color=TEXT_MUTED,
-                      hover_color="#002233",
+                      hover_color="#001a2a",
                       command=self._on_screenshot).pack(side="left", padx=2)
 
         ctk.CTkButton(btn_frame, text="NOTE", width=34, height=34,
                       font=ctk.CTkFont("Courier New", 9),
                       fg_color="#001520", border_color=BORDER, border_width=1,
                       corner_radius=2, text_color=TEXT_MUTED,
-                      hover_color="#002233",
+                      hover_color="#001a2a",
                       command=self._on_note).pack(side="left", padx=2)
 
         ctk.CTkButton(btn_frame, text="SEND", width=60, height=34,
@@ -470,9 +470,9 @@ class JarvisApp(ctk.CTk):
     def _add_message(self, text, is_user=False):
         now = datetime.datetime.now().strftime("%H:%M:%S")
         sender = "SACHIN" if is_user else "JARVIS"
-        label_color = TEXT_FAINT
+        label_color = AMBER if is_user else CYAN_DIM
         bubble_bg   = "#1e0e00" if is_user else "#002438"
-        border_col  = AMBER if is_user else BORDER
+        border_col  = AMBER if is_user else CYAN
         text_color  = AMBER if is_user else TEXT_PRI
 
         # Outer container
@@ -482,7 +482,7 @@ class JarvisApp(ctk.CTk):
         # Label
         lbl = ctk.CTkLabel(outer, text=f"{sender} — {now}",
                            font=ctk.CTkFont("Courier New", 9),
-                           text_color=label_color,
+                           text_color=TEXT_FAINT,
                            anchor="e" if is_user else "w")
         lbl.pack(fill="x", padx=4, pady=(0, 2))
 
@@ -495,7 +495,7 @@ class JarvisApp(ctk.CTk):
                          corner_radius=0).pack(side="left", fill="y")
 
         bubble = ctk.CTkFrame(row, fg_color=bubble_bg,
-                               border_color=border_col,
+                               border_color=BORDER,
                                border_width=1, corner_radius=2)
         bubble.pack(side="left" if not is_user else "right",
                     fill="x", expand=True, padx=(4 if not is_user else 0, 0))
@@ -585,17 +585,7 @@ class JarvisApp(ctk.CTk):
     def _run_llm(self, text):
         """Run LLM inference on a background thread. Never touch UI directly."""
         try:
-            if self.agent_bot:
-                messages = [{'role': 'user', 'content': text}]
-                collected = ""
-                try:
-                    for chunk in self.agent_bot.run(messages=messages):
-                        collected += str(chunk)
-                except Exception as e:
-                    self.msg_queue.put(("response", f"Error: {e}"))
-                    return
-                response = collected.strip() or "No response returned."
-            elif self.chatbot:
+            if self.chatbot:
                 response = self.chatbot.generate_response(text)
             elif not HAS_LLM:
                 # Echo mode fallback
@@ -654,7 +644,7 @@ class JarvisApp(ctk.CTk):
     def _run_mic(self):
         """Record audio and transcribe on a background thread."""
         try:
-            if HAS_STT and whisper_model:
+            if HAS_STT and whisper_model and listen:
                 text = listen(whisper_model)
                 if text.strip():
                     self.msg_queue.put(("mic_input", text))
@@ -671,7 +661,7 @@ class JarvisApp(ctk.CTk):
         self._add_jarvis_message("Screenshot capture not yet implemented. Coming soon.")
 
     def _on_note(self):
-        self._quick_cmd("open note file")
+        self._add_jarvis_message("Note mode not yet implemented. Coming soon.")
 
     def _quick_cmd(self, cmd):
         if not self.is_thinking:
@@ -690,10 +680,15 @@ class JarvisApp(ctk.CTk):
 
     def _set_voice_pack(self, pack):
         self.voice_mode = pack
+        try:
+            from profile_db import JarvisDB
+            JarvisDB().set_preference("voice_pack", pack.lower())
+        except Exception:
+            pass
         for p, btn in self.voice_pack_btns.items():
             active = p == pack
             btn.configure(
-                fg_color="#002233" if active else "#001520",
+                fg_color=BG_CYAN_LOW if active else BG_CYAN_FAINT,
                 border_color=CYAN_DIM if active else BORDER,
                 text_color=GREEN if active else TEXT_MUTED,
             )
