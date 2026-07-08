@@ -3,10 +3,40 @@
 
 const $ = (s) => document.querySelector(s);
 const fmt = (n, d = 1) => n == null ? "—" : Number(n).toFixed(d);
-const fmtTok = (n) => n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e3 ? (n / 1e3).toFixed(1) + "k" : String(n | 0);
+const fmtTok = (n) => {
+  n = Number(n) || 0;
+  const a = Math.abs(n);
+  if (a >= 1e12) return (n / 1e12).toFixed(1) + "T";
+  if (a >= 1e9) return (n / 1e9).toFixed(1) + "B";
+  if (a >= 1e6) return (n / 1e6).toFixed(1) + "M";
+  if (a >= 1e3) return (n / 1e3).toFixed(1) + "k";
+  return String(n | 0);
+};
+
+// Auto-scaling unit formatter: rolls a value up/down its unit ladder so it never
+// reads "29000MB" when it should say "28.3GB". Handles data sizes (×1024),
+// rates (×1024, keeps the /s), and power (×1000). Anything else is left as-is.
+const UNIT_LADDERS = [
+  { step: 1024, units: ["B", "KB", "MB", "GB", "TB", "PB"] },
+  { step: 1024, units: ["B/s", "KB/s", "MB/s", "GB/s", "TB/s"] },
+  { step: 1000, units: ["W", "kW", "MW"] },
+];
+function fmtScaled(value, unit, dec = 1) {
+  const v0 = Number(value) || 0;
+  const ladder = UNIT_LADDERS.find((l) => l.units.includes(unit));
+  if (!ladder) return v0.toFixed(dec) + unit; // %, generic — no scaling
+  const start = ladder.units.indexOf(unit);
+  let i = start, v = v0;
+  while (Math.abs(v) >= ladder.step && i < ladder.units.length - 1) { v /= ladder.step; i++; }
+  while (v !== 0 && Math.abs(v) < 1 && i > 0) { v *= ladder.step; i--; }
+  // keep a fractional digit when we changed units (so 1500 W → 1.5 kW, not 2 kW)
+  const scaled = i !== start;
+  const d = Math.abs(v) >= 100 ? 0 : Math.abs(v) >= 10 ? 1 : (scaled ? 1 : dec);
+  return v.toFixed(d) + ladder.units[i];
+}
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const MONO = '"JetBrains Mono", ui-monospace, monospace';
-const DIM = "#7d92b8";
+const DIM = "#8095bd";
 
 // ---------------------------------------------------------------- navigation
 document.querySelectorAll(".tab").forEach((b) =>
@@ -35,7 +65,7 @@ let PENDING_RENAME = null; // ws name to auto-open in rename mode after render
 let selAgent = "claude", selCount = 1;
 
 const THEME = {
-  background: "#0a0e1a", foreground: "#cfe3ff", cursor: "#35e0ff",
+  background: "#070b16", foreground: "#dbe9ff", cursor: "#38e1ff",
   selectionBackground: "#22c5e055",
 };
 
@@ -206,7 +236,7 @@ function updateLaunchStatus() {
   const avail = Object.values(AGENTS).filter((a) => a.available).length;
   const s = LAST;
   el.textContent = `${avail} AGENTS ARMED` +
-    (s ? ` · CPU ${fmt(s.cpu, 0)}% · ${fmt(s.watts.total, 0)}W · PING ${s.ping_ms ?? "—"}ms` : "");
+    (s ? ` · CPU ${fmt(s.cpu, 0)}% · ${fmtScaled(s.watts.total, "W", 0)} · PING ${s.ping_ms ?? "—"}ms` : "");
 }
 
 $("#deploy-btn").onclick = () => spawn(selAgent, selCount, ensureActiveWs());
@@ -679,6 +709,7 @@ async function boot() {
 function prepCanvas(canvas) {
   const ctx = canvas.getContext("2d");
   canvas.width = canvas.clientWidth * devicePixelRatio;
+  canvas.height = canvas.clientHeight * devicePixelRatio;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   return [ctx, canvas.width, canvas.height];
 }
@@ -716,7 +747,7 @@ function sparkline(canvas, series, colors, maxOverride, opts) {
   const s0 = series[0] || [];
   const cur = s0.length ? s0[s0.length - 1] : 0;
   const u = opts.unit || "", d = opts.dec ?? 0;
-  const lab = (v) => (opts.k ? fmtTok(v) : Number(v).toFixed(d)) + u;
+  const lab = (v) => opts.k ? fmtTok(v) + u : fmtScaled(v, u, d);
   ctx.font = `${9 * dpr}px ${MONO}`;
   ctx.textBaseline = "top";
   // max marker (top-right) and min marker (bottom-right)
@@ -774,14 +805,14 @@ function heatmapChart(canvas, grid) { // grid[7][24]
   const cw = (W - lx) / 24, ch = (H - ty) / 7;
   const max = Math.max(1, ...grid.flat());
   ctx.font = `${9 * dpr}px JetBrains Mono, monospace`;
-  ctx.fillStyle = "#7d92b8";
+  ctx.fillStyle = DIM;
   for (let h = 0; h < 24; h += 3) ctx.fillText(h, lx + h * cw + 1, 8 * dpr);
   for (let d = 0; d < 7; d++) {
-    ctx.fillStyle = "#7d92b8";
+    ctx.fillStyle = DIM;
     ctx.fillText(DOW[d], 0, ty + d * ch + ch * 0.75);
     for (let h = 0; h < 24; h++) {
       const v = grid[d][h];
-      ctx.fillStyle = v ? `rgba(53,224,255,${0.12 + 0.88 * (v / max)})` : "#141d33";
+      ctx.fillStyle = v ? `rgba(56,225,255,${0.12 + 0.88 * (v / max)})` : "#0b1122";
       ctx.fillRect(lx + h * cw + dpr, ty + d * ch + dpr, cw - 2 * dpr, ch - 2 * dpr);
     }
   }
@@ -797,7 +828,7 @@ let LAST = null;
 function render(s) {
   LAST = s;
   $("#mini-cpu").textContent = `CPU ${fmt(s.cpu, 0)}%`;
-  $("#mini-w").textContent = `${fmt(s.watts.total, 0)}W`;
+  $("#mini-w").textContent = fmtScaled(s.watts.total, "W", 0);
   $("#mini-ping").textContent = s.ping_ms == null ? "ping —" : `ping ${s.ping_ms}ms`;
   updateLaunchStatus();
 
@@ -818,9 +849,9 @@ function render(s) {
     card("Active agents", s.terminals.filter((t) => t.alive).length, s.terminals.length + " terminals total");
 
   const h = s.history || [];
-  sparkline($("#chart-cpu"), [h.map((x) => x.cpu), h.map((x) => x.mem)], ["#35e0ff", "#fbbf24"], 100, { unit: "%", dec: 0 });
-  sparkline($("#chart-w"), [h.map((x) => x.w), h.map((x) => x.gpu_w || 0)], ["#4ade80", "#35e0ff"], 0, { unit: "W", dec: 0 });
-  sparkline($("#chart-net"), [h.map((x) => x.rx / 1024), h.map((x) => x.tx / 1024)], ["#35e0ff", "#f87171"], 0, { unit: "KB/s", dec: 0 });
+  sparkline($("#chart-cpu"), [h.map((x) => x.cpu), h.map((x) => x.mem)], ["#38e1ff", "#fbbf24"], 100, { unit: "%", dec: 0 });
+  sparkline($("#chart-w"), [h.map((x) => x.w), h.map((x) => x.gpu_w || 0)], ["#34e39b", "#38e1ff"], 0, { unit: "W", dec: 0 });
+  sparkline($("#chart-net"), [h.map((x) => x.rx / 1024), h.map((x) => x.tx / 1024)], ["#38e1ff", "#f87171"], 0, { unit: "KB/s", dec: 0 });
 
   // per-agent breakdown
   const ag = u.agents || {};
@@ -867,7 +898,7 @@ function render(s) {
   stackedBars($("#chart-days"),
     [days.map((d) => d[1].in ?? d[1].tokens), days.map((d) => d[1].out ?? 0),
      days.map((d) => d[1].cache ?? 0)],
-    ["#35e0ff", "#4ade80", "#a78bfa"]);
+    ["#38e1ff", "#34e39b", "#a78bfa"]);
   barsChart($("#chart-cost"), days.map((d) => d[1].cost || 0), "#fbbf24");
   $("#days-cost").textContent = "· $" + fmt(days.reduce((a, d) => a + (d[1].cost || 0), 0), 0) + " over " + days.length + "d";
 
@@ -888,15 +919,15 @@ function render(s) {
     card("Memory", fmt(s.mem_pct, 0) + "%", `${s.mem_used_gb} / ${s.mem_total_gb} GB`) +
     card("Processes", s.nproc ?? "—", "running") +
     card("Uptime", fmt(s.uptime_h, 1) + "h", `ping ${s.ping_ms ?? "—"}ms`) +
-    card("Power", fmt(s.watts.total, 0) + " W", `$${fmt(e.proj_hour, 3)}/h · $${fmt(e.proj_month, 0)}/mo`) +
+    card("Power", fmtScaled(s.watts.total, "W", 0), `$${fmt(e.proj_hour, 3)}/h · $${fmt(e.proj_month, 0)}/mo`) +
     card("Energy today", fmt(e.kwh_today, 2) + " kWh", `$${fmt(e.cost_today, 2)} @ ${e.rate_cents}¢ ${e.period}`) +
     card("Energy all-time", fmt(e.kwh_total, 1) + " kWh", `$${fmt(e.cost_total, 2)} · peak ${fmt(e.peak_day_kwh, 1)} kWh/d`);
 
   const w = s.watts;
   $("#sys-power").innerHTML = ["cpu", "gpu", "display", "baseline", "psu_loss"]
-    .map((k) => `<div class="set-row"><label>${k}</label><span class="wval">${fmt(w[k], 1)} W</span>
+    .map((k) => `<div class="set-row"><label>${k}</label><span class="wval">${fmtScaled(w[k], "W", 1)}</span>
         <div class="bar grow"><i style="width:${(w[k] / w.total) * 100}%"></i></div></div>`).join("")
-    + `<div class="set-row"><label><b>total</b></label><b class="wval">${fmt(w.total, 1)} W</b></div>`;
+    + `<div class="set-row"><label><b>total</b></label><b class="wval">${fmtScaled(w.total, "W", 1)}</b></div>`;
 
   $("#sys-cores").innerHTML = `<div class="cores">` +
     (s.cpu_per_core || []).map((c, i) =>
@@ -911,8 +942,8 @@ function render(s) {
          <td class="num">${fmt(g.mem_used / 1024, 1)}/${fmt(g.mem_total / 1024, 1)}G</td>
          <td class="num">${g.power}/${g.power_limit}W</td><td class="num">${g.temp}°C</td></tr>`).join("") + "</table>"
     : '<span class="dimtext">no NVIDIA GPU detected</span>';
-  sparkline($("#chart-gpu-util"), [h.map((x) => x.gpu_util || 0)], ["#35e0ff"], 100, { unit: "%", dec: 0 });
-  sparkline($("#chart-gpu-w"), [h.map((x) => x.gpu_w || 0)], ["#4ade80"], 0, { unit: "W", dec: 0 });
+  sparkline($("#chart-gpu-util"), [h.map((x) => x.gpu_util || 0)], ["#38e1ff"], 100, { unit: "%", dec: 0 });
+  sparkline($("#chart-gpu-w"), [h.map((x) => x.gpu_w || 0)], ["#34e39b"], 0, { unit: "W", dec: 0 });
   sparkline($("#chart-gpu-mem"), [h.map((x) => x.gpu_mem || 0)], ["#fbbf24"], 0, { unit: "MB", dec: 0 });
 
   const temps = s.temps || [], fans = s.fans || [];
