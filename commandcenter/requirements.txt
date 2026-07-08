@@ -1,0 +1,5 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+psutil>=5.9
+# Windows-only: ConPTY-backed terminals. Auto-installed by start.py on Windows.
+pywinpty>=2.0 ; sys_platform == "win32"

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JARVIS Command Center</title>
+<link rel="stylesheet" href="vendor/xterm.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav id="topbar">
+  <span class="logo">◈ JARVIS</span>
+  <button class="tab active" data-page="jarvis">JARVIS</button>
+  <button class="tab" data-page="terminals">Terminals</button>
+  <button class="tab" data-page="hive">Hive</button>
+  <button class="tab" data-page="board">Board</button>
+  <button class="tab" data-page="files">Files</button>
+  <button class="tab" data-page="overview">Overview</button>
+  <button class="tab" data-page="system">System</button>
+  <button class="tab" data-page="settings">Settings</button>
+  <span id="statusdots">
+    <span id="dot-sse" class="dot" title="telemetry stream">●</span>
+    <span id="mini-cpu"></span><span id="mini-w"></span><span id="mini-ping"></span>
+  </span>
+</nav>
+
+<main id="page-terminals" class="page">
+  <div id="ws-bar"></div>
+  <div id="term-toolbar" class="hidden"></div>
+  <div id="term-grid"></div>
+
+  <div id="launcher">
+    <div class="jarvis-core" aria-hidden="true">
+      <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+      <div class="core"></div>
+    </div>
+    <h1 class="glow-title">J A R V I S</h1>
+    <p class="glow-sub">COMMAND CENTER <span class="online">● ONLINE</span></p>
+    <p id="launch-status" class="launch-status"></p>
+
+    <div class="launch-panel">
+      <div class="launch-row"><span class="launch-label">AGENT</span><div id="agent-chips"></div></div>
+      <div class="launch-row"><span class="launch-label">TERMINALS</span><div id="count-btns"></div></div>
+      <div class="launch-row"><span class="launch-label">DIRECTORY</span>
+        <div class="cwd-wrap">
+          <input id="cwd-input" placeholder="~ (default)" spellcheck="false">
+          <button id="cwd-browse" class="btn slim" title="browse folders">▸ BROWSE</button>
+          <div id="dir-picker" class="dir-picker hidden"></div>
+        </div></div>
+      <div class="launch-row"><span class="launch-label">MISSION</span>
+        <textarea id="mission-input" rows="2" spellcheck="false"
+          placeholder="optional — auto-typed into every deployed agent"></textarea></div>
+      <div class="launch-row launch-actions">
+        <button id="deploy-btn" class="btn deploy">▶ DEPLOY</button>
+        <button id="mix-btn" class="btn">⊞ 1 × EACH AGENT</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<main id="page-jarvis" class="page active">
+  <div class="holo">
+    <canvas id="holo-core" class="holo-core"></canvas>
+    <div class="holo-status"><span id="holo-state">IDLE</span><span id="holo-mood" class="holo-mood"></span></div>
+    <div class="holo-transcript"><span class="holo-lbl">YOU</span><span id="holo-you">—</span></div>
+    <div class="holo-reply"><span class="holo-lbl">JARVIS</span><span id="holo-reply">Say the word, sir.</span></div>
+    <div class="holo-bar">
+      <select id="holo-pack" title="voice pack">
+        <option value="professional">Professional</option>
+        <option value="genz">Gen-Z</option>
+      </select>
+      <input id="holo-input" placeholder="type to JARVIS, or use the voice loop…" spellcheck="false">
+      <button id="holo-send" class="btn deploy">SEND</button>
+      <button id="holo-up" class="btn slim" title="good reply (RL)">▲</button>
+      <button id="holo-down" class="btn slim" title="bad reply (RL)">▼</button>
+    </div>
+    <div class="holo-code-row">
+      <label class="holo-code-toggle">
+        <input type="checkbox" id="holo-codemode">
+        <span class="holo-code-label">CODE MODE</span>
+      </label>
+      <select id="holo-codeagent" title="coding agent" class="hidden"></select>
+      <input id="holo-coderepo" placeholder="repo / folder (~ default)" spellcheck="false" class="hidden">
+    </div>
+    <p class="hint holo-hint">Local model only (Hermes → <code id="holo-model">qwen3.5:4b</code>). Wake words, notes ("make a note …"), system status, and pending work are on-device. With <b>Code Mode</b> on, a request is dispatched to a coding agent instead of answered in chat. Launch the <b>jarvis-voice</b> agent from Terminals for speech in/out.</p>
+  </div>
+</main>
+
+<main id="page-hive" class="page">
+  <div class="board-head">
+    <h2>HIVE</h2>
+    <span class="hint">one mission → a team of agents (or a single recursive autopilot), in a shared workspace</span>
+  </div>
+  <div class="board-help" id="hive-help-swarm">
+    <div class="step"><b>1 · MISSION</b><span>Describe the whole job in one line.</span></div>
+    <div class="step"><b>2 · TODO LIST</b><span>The coordinator plans the mission into a checklist and writes a full brief per subtask.</span></div>
+    <div class="step"><b>3 · SUBAGENTS</b><span>It dispatches one subagent per subtask, handing each the full context it needs to work alone.</span></div>
+    <div class="step"><b>4 · REVIEW</b><span>As subagents report back, the coordinator integrates, re-briefs, and re-dispatches until done.</span></div>
+  </div>
+  <div class="board-help hidden" id="hive-help-auto">
+    <div class="step"><b>1 · MISSION</b><span>Describe the goal in one line.</span></div>
+    <div class="step"><b>2 · AUTOPILOT</b><span>One agent loops on its own: plan → build → test → fix, no babysitting.</span></div>
+    <div class="step"><b>3 · LOG</b><span>It records each pass to the shared memory folder so you can follow along.</span></div>
+    <div class="step"><b>4 · STOP</b><span>It stops when the mission's done — or kill its pane anytime.</span></div>
+  </div>
+  <div class="card swarm-card">
+    <div class="swarm-row">
+      <label class="hive-mode"><input type="radio" name="hive-mode" value="swarm" checked> Swarm <span class="hint">coordinator + workers</span></label>
+      <label class="hive-mode"><input type="radio" name="hive-mode" value="auto"> Autopilot <span class="hint">one recursive agent</span></label>
+    </div>
+    <div class="swarm-row">
+      <input id="swarm-mission" placeholder="mission, e.g. 'add dark mode across the app and test it'" spellcheck="false">
+    </div>
+    <div class="swarm-row">
+      <label class="hint">agent <select id="swarm-agent"></select></label>
+      <label class="hint" id="workers-wrap" title="max subagents the coordinator runs at once">max subagents <input id="swarm-workers" type="number" min="1" max="12" value="3" style="width:56px"></label>
+      <input id="swarm-cwd" placeholder="~ (default)" spellcheck="false">
+      <button id="swarm-go" class="btn deploy">LAUNCH HIVE</button>
+    </div>
+  </div>
+</main>
+
+<main id="page-board" class="page">
+  <div class="board-head">
+    <h2>BOARD</h2>
+    <span class="hint">a task queue that launches agents for you</span>
+    <button id="card-new" class="btn deploy slim">+ NEW CARD</button>
+  </div>
+  <div class="board-help">
+    <div class="step"><b>1 · WRITE</b><span>New Card = a task + which agent + which folder. It waits in Backlog / To&nbsp;Do.</span></div>
+    <div class="step"><b>2 · DISPATCH</b><span>Drag a card into <b>In&nbsp;Progress</b> (or hit ▶). That agent spawns in the folder with the card text as its prompt.</span></div>
+    <div class="step"><b>3 · REVIEW</b><span>When the agent's terminal exits, its card auto-moves to <b>Review</b> for you to check the work.</span></div>
+    <div class="step"><b>4 · DONE</b><span>Drag it to <b>Done</b>. Every dispatched agent also shares notes in the memory folder (see Settings).</span></div>
+  </div>
+  <div id="board" class="board"></div>
+</main>
+
+<main id="page-files" class="page">
+  <div class="files-layout">
+    <div class="card files-tree">
+      <div class="files-pathbar">
+        <button id="files-up" class="btn slim" title="parent">↑</button>
+        <button id="files-home" class="btn slim" title="home">⌂</button>
+        <input id="files-path" spellcheck="false">
+        <label class="hint"><input type="checkbox" id="files-hidden"> hidden</label>
+      </div>
+      <div id="files-list" class="scrollbox tall"></div>
+    </div>
+    <div class="card files-view">
+      <div class="files-pathbar">
+        <span id="file-name" class="dimtext">no file open</span>
+        <span class="grow"></span>
+        <button id="file-save" class="btn slim" disabled>SAVE</button>
+      </div>
+      <textarea id="file-content" spellcheck="false" placeholder="click a file to view / edit"></textarea>
+    </div>
+    <div class="card files-preview">
+      <div class="files-pathbar">
+        <input id="preview-url" value="http://localhost:3000" spellcheck="false">
+        <button id="preview-go" class="btn slim">OPEN</button>
+      </div>
+      <iframe id="preview-frame" title="localhost preview"></iframe>
+    </div>
+  </div>
+</main>
+
+<main id="page-overview" class="page">
+  <div class="cards dense" id="ov-cards"></div>
+  <div class="row2">
+    <div class="card"><h3>Agents</h3><div id="ov-agents"></div></div>
+    <div class="card chart"><h3>30-day tokens <i class="k c1">■</i>in <i class="k c3">■</i>out <i class="k c5">■</i>cache <span id="days-cost" class="h-note"></span></h3><canvas id="chart-days" height="104"></canvas>
+    <h3 style="margin-top:8px">30-day cost $</h3><canvas id="chart-cost" height="56"></canvas></div>
+  </div>
+  <div class="row2">
+    <div class="card"><h3>Token usage by model</h3><div id="ov-models" class="scrollbox"></div></div>
+    <div class="card"><h3>Recent sessions</h3><div id="ov-recent" class="scrollbox"></div></div>
+  </div>
+  <div class="row2">
+    <div class="card"><h3>Activity heatmap <span class="h-note">session starts · 90d</span></h3><canvas id="chart-heat" height="118"></canvas></div>
+    <div class="card"><h3>Projects</h3><div id="ov-projects" class="scrollbox"></div></div>
+  </div>
+</main>
+
+<main id="page-system" class="page">
+  <div class="cards dense" id="sys-cards"></div>
+  <div class="row3">
+    <div class="card chart"><h3>CPU <i class="k c1">■</i> / Mem <i class="k c2">■</i></h3><canvas id="chart-cpu" height="76"></canvas></div>
+    <div class="card chart"><h3>Total <i class="k c3">■</i> / GPU <i class="k c1">■</i> power</h3><canvas id="chart-w" height="76"></canvas></div>
+    <div class="card chart"><h3>Net ↓<i class="k c1">■</i> ↑<i class="k c4">■</i></h3><canvas id="chart-net" height="76"></canvas></div>
+  </div>
+  <div class="row2">
+    <div class="card"><h3>Power breakdown</h3><div id="sys-power"></div></div>
+    <div class="card"><h3>CPU cores</h3><div id="sys-cores"></div></div>
+  </div>
+  <div class="row2">
+    <div class="card"><h3>GPUs</h3><div id="sys-gpus"></div>
+      <div class="row3 tight">
+        <div><h3>util % <i class="k c1">■</i></h3><canvas id="chart-gpu-util" height="52"></canvas></div>
+        <div><h3>power W <i class="k c3">■</i></h3><canvas id="chart-gpu-w" height="52"></canvas></div>
+        <div><h3>vram MB <i class="k c2">■</i></h3><canvas id="chart-gpu-mem" height="52"></canvas></div>
+      </div>
+    </div>
+    <div class="card"><h3>Thermals &amp; fans</h3><div id="sys-sensors" class="scrollbox"></div></div>
+  </div>
+  <div class="row2">
+    <div class="card"><h3>Storage</h3><div id="sys-disks"></div></div>
+    <div class="card"><h3>Top processes</h3><div id="sys-procs" class="scrollbox"></div></div>
+  </div>
+</main>
+
+<main id="page-settings" class="page">
+  <div class="settings-head">
+    <div>
+      <h2>Settings</h2>
+      <p class="hint">Changes persist to <code>config.json</code> and apply immediately.</p>
+    </div>
+    <div><button id="save-cfg" class="btn deploy">Save changes</button><span id="save-msg"></span></div>
+  </div>
+  <section class="card" style="margin-bottom:8px">
+    <h3>How it works</h3>
+    <div class="explain">
+      <p><b>Terminals</b> — pick an agent, a count, a folder, and an optional
+      mission. DEPLOY spawns that many live agent terminals in a workspace tab.
+      A pane glows <span style="color:var(--amber)">amber</span> only when its
+      agent is actually asking you to confirm something.</p>
+      <p><b>Board</b> — a task queue. Each card is <i>a task + an agent +
+      a folder</i>. Dragging a card into <b>In&nbsp;Progress</b> (or ▶) launches
+      that agent in that folder with the card text as its first prompt; when the
+      agent's terminal exits, the card moves itself to <b>Review</b>. It's the
+      hands-off way to run work — Terminals is the hands-on way.</p>
+      <p><b>Shared memory</b> — every board-dispatched agent is told to read/write
+      notes in <code id="mem-path">the shared memory folder</code> so parallel
+      agents learn from each other.</p>
+      <p><b>Permission bypass</b> — when on, each agent starts with its
+      skip-permission flag so it won't stop to ask. Turn it off per agent below
+      if you want the prompts back.</p>
+    </div>
+  </section>
+  <div class="row2">
+    <section class="card">
+      <h3>Model pricing <span class="h-note">$ per million tokens</span></h3>
+      <div id="set-pricing"></div>
+    </section>
+    <div>
+      <section class="card">
+        <h3>Agent launch commands</h3>
+        <p class="hint">Folders are auto-trusted at spawn for Claude &amp; Codex.</p>
+        <div id="set-agents"></div>
+      </section>
+      <section class="card">
+        <h3>JARVIS voice <span class="h-note">local model only — no cloud, no per-token cost</span></h3>
+        <div class="set-grid">
+          <label class="set-cell"><span>local model</span><input data-jkey="local_model" value=""></label>
+          <label class="set-cell"><span>provider</span><input data-jkey="local_provider" value=""></label>
+          <label class="set-cell"><span>voice pack</span><input data-jkey="voice_pack" value=""></label>
+          <label class="set-cell"><span>timeout (s)</span><input type="number" data-jkey="timeout_s" value=""></label>
+        </div>
+        <label class="set-cell wide-cell"><span>route through Hermes (needs Hermes' ollama provider configured)</span>
+          <input type="checkbox" data-jkey="use_hermes"></label>
+        <label class="set-cell wide-cell"><span>enable financial / cart ordering <b style="color:var(--red)">(off by default)</b></span>
+          <input type="checkbox" data-jkey="financial_enabled"></label>
+        <label class="set-cell" style="margin-top:6px"><span>blocked words (comma-separated — censorship)</span>
+          <input class="wide" data-jkey="blocked_words" value="" placeholder="none"></label>
+      </section>
+      <section class="card">
+        <h3>Permission bypass <span class="h-note">appended to every spawned terminal</span></h3>
+        <label class="set-cell wide-cell"><span>bypass permissions on startup</span>
+          <input type="checkbox" id="set-bypass"></label>
+        <div id="set-bypass-flags"></div>
+        <p class="hint">Per-agent flag added when enabled. opencode has no flag — it gets
+        <code>OPENCODE_PERMISSION=allow</code> via environment instead.</p>
+      </section>
+      <section class="card">
+        <h3>Power model <span class="h-note">watts</span></h3>
+        <div id="set-power" class="set-grid"></div>
+      </section>
+      <section class="card">
+        <h3>Electricity rates <span class="h-note">¢ per kWh · Ontario TOU</span></h3>
+        <div id="set-tou" class="set-grid"></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script src="vendor/xterm.min.js"></script>
+<script src="vendor/addon-fit.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

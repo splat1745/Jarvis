@@ -1,0 +1,4 @@
+.venv/
+energy_state.json
+server.log
+__pycache__/

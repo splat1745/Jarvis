@@ -1,0 +1,148 @@
+{
+  "network_mode": "local",
+  "port": 7745,
+  "agents": {
+    "claude": "claude",
+    "codex": "codex --skip-git-repo-check",
+    "opencode": "opencode",
+    "hermes": "hermes",
+    "shell": "bash",
+    "jarvis-voice": "/media/sovereign/b9ca1fa4-9a7b-4dec-9857-b05bfaffd1d1/Jarvis/.venv/bin/python /media/sovereign/b9ca1fa4-9a7b-4dec-9857-b05bfaffd1d1/Jarvis/commandcenter/jarvis_voice.py",
+    "jarvis-gui": "/media/sovereign/b9ca1fa4-9a7b-4dec-9857-b05bfaffd1d1/Jarvis/.venv/bin/python /media/sovereign/b9ca1fa4-9a7b-4dec-9857-b05bfaffd1d1/Jarvis/JARVIS_gui.py"
+  },
+  "default_cwd": "~",
+  "bypass_permissions": true,
+  "bypass_flags": {
+    "claude": "--dangerously-skip-permissions",
+    "codex": "--dangerously-bypass-approvals-and-sandbox",
+    "opencode": "",
+    "hermes": "--yolo",
+    "shell": "",
+    "jarvis-voice": "",
+    "jarvis-gui": ""
+  },
+  "dispatch_prompt_delay_s": 3,
+  "shared_memory_dir": "~/.jarvis-memory",
+  "jarvis": {
+    "use_hermes": false,
+    "local_provider": "ollama",
+    "local_model": "qwen3.5:4b",
+    "ollama_url": "http://localhost:11434/v1/chat/completions",
+    "timeout_s": 90,
+    "voice_pack": "professional",
+    "financial_enabled": false,
+    "blocked_words": []
+  },
+  "pt_collectors_dir": "/media/sovereign/b9ca1fa4-9a7b-4dec-9857-b05bfaffd1d1/ProductivityTracker/live",
+  "pricing_per_mtok": {
+    "claude-fable-5": {
+      "input": 10,
+      "output": 50,
+      "cache_read": 1,
+      "cache_write": 12.5
+    },
+    "claude-opus-4-8": {
+      "input": 5,
+      "output": 25,
+      "cache_read": 0.5,
+      "cache_write": 6.25
+    },
+    "claude-opus-4.8": {
+      "input": 5,
+      "output": 25,
+      "cache_read": 0.5,
+      "cache_write": 6.25
+    },
+    "claude-sonnet-5": {
+      "input": 3,
+      "output": 15,
+      "cache_read": 0.3,
+      "cache_write": 3.75
+    },
+    "claude-sonnet-4.6": {
+      "input": 3,
+      "output": 15,
+      "cache_read": 0,
+      "cache_write": 3.75
+    },
+    "claude-haiku-4-5": {
+      "input": 1,
+      "output": 5,
+      "cache_read": 0.1,
+      "cache_write": 1.25
+    },
+    "codex:gpt-5.4": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0
+    },
+    "codex:gpt-5.5": {
+      "input": 5,
+      "output": 30,
+      "cache_read": 0.5
+    },
+    "gemini-3.5-flash": {
+      "input": 1.5,
+      "output": 9,
+      "cache_read": 0.15
+    },
+    "gemini-3-flash-preview": {
+      "input": 0.5,
+      "output": 3,
+      "cache_read": 0.05
+    },
+    "deepseek-v4-flash": {
+      "input": 0.14,
+      "output": 0.28,
+      "cache_read": 0
+    },
+    "minimax-m3": {
+      "input": 0.3,
+      "output": 1.2,
+      "cache_read": 0.06
+    },
+    "mimo-v2.5-free": {
+      "input": 0.14,
+      "output": 0.28,
+      "cache_read": 0
+    },
+    "nemotron-3-ultra": {
+      "input": 0.68,
+      "output": 2.67,
+      "cache_read": 0.25
+    },
+    "step-3.7-flash": {
+      "input": 0.2,
+      "output": 1.15,
+      "cache_read": 0.04
+    },
+    "glm-5.2": {
+      "input": 1.4,
+      "output": 4.4,
+      "cache_read": 0.26
+    },
+    "qwen3.6-plus-free": {
+      "input": 0.5,
+      "output": 3,
+      "cache_read": 0.05
+    },
+    "deepseek-chat-v3.1:free": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0
+    }
+  },
+  "power": {
+    "cpu_idle_w": 30,
+    "cpu_max_w": 220,
+    "baseline_w": 45,
+    "display_w": 32,
+    "psu_loss_pct": 10
+  },
+  "tou_rates_cents": {
+    "on": 20.3,
+    "mid": 15.7,
+    "off": 9.8
+  },
+  "claude_projects_dir": "~/.claude/projects"
+}
